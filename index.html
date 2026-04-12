@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📡 Dashboard Migração Rádio → FTTH</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ─── DADOS (Atualizados do Monday.com em 10/04/2026) ─────────────────────────
+    const mondayProjetos = [
+      { nome:"Expansão Cluster 37 - Caldeirão Grande - BA", clusters:[37], cidade:"Caldeirão Grande", status:"Em correção", projetista:"João Victor", valor:55884.11, portas:32, clientes:27 },
+      { nome:"Projetado Clusters 5, 32, 112 e 210 - Caldeirão Grande - BA", clusters:[5,32,112,210], cidade:"Caldeirão Grande", status:"Aguardando vistoria", projetista:"Yuri", valor:135849.33, portas:184, clientes:187 },
+      { nome:"Expansão Cluster 33 e 177 - Caém - BA", clusters:[33,177], cidade:"Caém", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:153153.64, portas:128, clientes:57 },
+      { nome:"Expansão Cluster 274 - Boa Vista - PB", clusters:[274], cidade:"Boa Vista", status:"Aguardando vistoria", projetista:"Jose Mauricio / Rafael", valor:123697, portas:24, clientes:8 },
+      { nome:"Expansão Cluster 350 - Itiúba - BA", clusters:[350], cidade:"Itiúba", status:"Aguardando vistoria", projetista:"Yuri", valor:119618.79, portas:64, clientes:7 },
+      { nome:"Expansão Cluster 108 e 465 - Itiúba - BA", clusters:[108,465], cidade:"Itiúba", status:"Aguardando vistoria", projetista:"Yuri", valor:58396.91, portas:112, clientes:25 },
+      { nome:"Expansão Clusters 29,27,360,157,167,315,377 e 233 - Ponto Novo - BA", clusters:[29,27,360,157,167,315,377,233], cidade:"Ponto Novo", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:169291.82, portas:408, clientes:146 },
+      { nome:"Expansão Cluster 262 - Saúde - BA", clusters:[262], cidade:"Saúde", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:19651.70, portas:80, clientes:9 },
+      { nome:"Expansão Cluster 361 - Quixabeira - BA", clusters:[361], cidade:"Quixabeira", status:"Aguardando vistoria", projetista:"Yuri", valor:25485.70, portas:32, clientes:7 },
+      { nome:"Expansão Cluster 415 - Queimadas - BA", clusters:[415], cidade:"Queimadas", status:"Aguardando vistoria", projetista:"Jose Mauricio / Rafael", valor:48135, portas:32, clientes:6 },
+      { nome:"Expansão Cluster 271 - Itiúba - BA", clusters:[271], cidade:"Itiúba", status:"Aguardando vistoria", projetista:"Jose Mauricio / Rafael", valor:55605, portas:64, clientes:9 },
+      { nome:"Expansão Cluster 78, 88, 94, 111, 114, 208 e 427 - Antônio Gonçalves - BA", clusters:[78,88,94,111,114,208,427], cidade:"Antônio Gonçalves", status:"Aguardando vistoria", projetista:"Yuri", valor:223949.10, portas:216, clientes:124 },
+      { nome:"Expansão Cluster 103 - Saúde - BA", clusters:[103], cidade:"Saúde", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:71142.14, portas:48, clientes:20 },
+      { nome:"Expansão Cluster 447 - Itiúba - BA", clusters:[447], cidade:"Itiúba", status:"Aguardando vistoria", projetista:"Jose Mauricio / Rafael", valor:62942, portas:24, clientes:6 },
+      { nome:"Expansão Cluster 269 - Jacobina - BA", clusters:[269], cidade:"Jacobina", status:"Aguardando vistoria", projetista:"Yuri", valor:3511.82, portas:16, clientes:9 },
+      { nome:"Expansão Cluster 292 - Senhor do Bonfim - BA", clusters:[292], cidade:"Sr. do Bonfim", status:"Aguardando vistoria", projetista:"Jose Mauricio / Rafael", valor:67848, portas:16, clientes:8 },
+      { nome:"Expansão Cluster 452 - Jacobina - BA", clusters:[452], cidade:"Jacobina", status:"Aguardando vistoria", projetista:"Yuri", valor:19341.63, portas:16, clientes:6 },
+      { nome:"Expansão Cluster 49 - Cansanção - BA", clusters:[49], cidade:"Cansanção", status:"Aguardando vistoria", projetista:"Yuri", valor:97278.73, portas:80, clientes:33 },
+      { nome:"Expansão Cluster 214 e 235 - Queimadas - BA", clusters:[214,235], cidade:"Queimadas", status:"Aguardando vistoria", projetista:"Yuri", valor:104222.14, portas:56, clientes:21 },
+      { nome:"Expansão Clusters 254 e 330 - Bernardino Batista - PB", clusters:[254,330], cidade:"Bernardino Batista", status:"Aguardando vistoria", projetista:"João Victor / Yuri", valor:81629, portas:128, clientes:16 },
+      { nome:"Expansão Cluster 186 - Triunfo - PB", clusters:[186], cidade:"Triunfo", status:"Aguardando vistoria", projetista:"João Victor", valor:17896.38, portas:16, clientes:12 },
+      { nome:"Expansão Cluster 398 - Cubati - PB", clusters:[398], cidade:"Cubati", status:"Aguardando vistoria", projetista:"Yuri", valor:6287.91, portas:32, clientes:6 },
+      { nome:"Expansão Cluster 34 e 280 - Sossego - PB", clusters:[34,280], cidade:"Sossego", status:"Aguardando vistoria", projetista:"Yuri", valor:92409.08, portas:168, clientes:51 },
+      { nome:"Expansão Cluster 85, 199, 220, 282, 391, 392 e 399 - Sossego - PB", clusters:[85,199,220,282,391,392,399], cidade:"Sossego", status:"Aguardando vistoria", projetista:"João Victor / Yuri", valor:273816.06, portas:368, clientes:70 },
+      { nome:"Expansão Cluster 184 - Picuí - PB", clusters:[184], cidade:"Picuí", status:"Aguardando vistoria", projetista:"Yuri", valor:30785.97, portas:24, clientes:12 },
+      { nome:"Expansão Cluster 25 e 38 - Tenório - PB", clusters:[25,38], cidade:"Tenório", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:105946.80, portas:128, clientes:30 },
+      { nome:"Projetado Clusters 9, 26, 50, 122 e 242 - Senhor do Bonfim - BA", clusters:[9,26,50,122,242], cidade:"Senhor do Bonfim", status:"Vistoria concluída", projetista:"Yuri", valor:228872.26, portas:352, clientes:226 },
+      { nome:"Expansão Cluster 95 e 137 - Picuí - PB", clusters:[95,137], cidade:"Picuí", status:"Vistoria concluída", projetista:"Yuri", valor:177373.45, portas:144, clientes:38 },
+      { nome:"Projetado Cluster 10 - Caém - BA", clusters:[10], cidade:"Caém", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:148402.74, portas:336, clientes:124 },
+      { nome:"Projetado Cluster 21, 40 e 450 - Capim Grosso - BA", clusters:[21,40,450], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:128063.43, portas:256, clientes:113 },
+      { nome:"Expansão Cluster 62, 228, 359 - Filadélfia - BA", clusters:[62,228,359], cidade:"Filadélfia", status:"Vistoria concluída", projetista:"João Victor", valor:122256.88, portas:80, clientes:45 },
+      { nome:"Expansão Cluster 371 - Filadélfia - BA", clusters:[371], cidade:"Filadélfia", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:27466.86, portas:24, clientes:7 },
+      { nome:"Expansão Cluster 439 e 261 - Capim Grosso - BA", clusters:[439,261], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Rafael Paiva", valor:92194.19, portas:192, clientes:18 },
+      { nome:"Expansão Cluster 128 e 348 - Capim Grosso - BA", clusters:[128,348], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Yuri", valor:82074.44, portas:72, clientes:24 },
+      { nome:"Expansão Cluster 413, 293 e 17 - São José do Jacuípe - BA", clusters:[413,293,17], cidade:"São José do Jacuípe", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:111126.25, portas:224, clientes:94 },
+      { nome:"Expansão Cluster 250 - Picuí - PB", clusters:[250], cidade:"Picuí", status:"Avaliação supervisor", projetista:"Jose Mauricio / Rafael", valor:17068.25, portas:32, clientes:9 },
+      { nome:"Expansão Cluster 221 - Baraúna - PB", clusters:[221], cidade:"Baraúna", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:65341.73, portas:96, clientes:10 },
+      { nome:"Expansão Clusters 83, 123 e 207 - Pindobaçu - BA", clusters:[83,123,207], cidade:"Pindobaçu", status:"Avaliação supervisor", projetista:"Yuri", valor:150041.17, portas:104, clientes:53 },
+      { nome:"Projeto Cluster 201 e 257 - Filadélfia - BA", clusters:[201,257], cidade:"Filadélfia", status:"Avaliação supervisor", projetista:"Rafael Paiva", valor:49817.65, portas:96, clientes:228 },
+      { nome:"Expansão Cluster 147, 277, 278, 281 e 393 - Pedra Lavrada - PB", clusters:[147,277,278,281,393], cidade:"Pedra Lavrada", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:187410.25, portas:120, clientes:45 },
+      { nome:"Expansão Cluster 145 - Tenório - PB", clusters:[145], cidade:"Tenório", status:"Avaliação supervisor", projetista:"Romário / Rafael", valor:43100.01, portas:40, clientes:15 },
+      { nome:"Expansão Cluster 96, 93 e 107 - Pedra Lavrada - PB", clusters:[96,93,107], cidade:"Pedra Lavrada", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:128933.66, portas:144, clientes:62 },
+      { nome:"Expansão Cluster 327 - Picuí - PB", clusters:[327], cidade:"Picuí", status:"Avaliação supervisor", projetista:"Yuri", valor:8300.74, portas:16, clientes:7 },
+      { nome:"Expansão Cluster 253 - São João do Rio do Peixe - PB", clusters:[253], cidade:"São João do Rio do Peixe", status:"Avaliação supervisor", projetista:"Yuri", valor:61774.14, portas:40, clientes:9 },
+      { nome:"Expansão Cluster 326 e 276 - Sossego - PB", clusters:[326,276], cidade:"Sossego", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:110521.62, portas:48, clientes:15 },
+      { nome:"Expansão Cluster 275 - Sossego - PB", clusters:[275], cidade:"Sossego", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:109526.45, portas:48, clientes:8 },
+      { nome:"Expansão Cluster 251 e 126 - Nova Palmeira - PB", clusters:[251,126], cidade:"Nova Palmeira", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:136918.60, portas:128, clientes:26 },
+      { nome:"Projetado Clusters 8 e 369 - Caldeirão Grande - BA", clusters:[8,369], cidade:"Caldeirão Grande", status:"Avaliação coordenador", projetista:"Yuri", valor:48450.09, portas:128, clientes:132 },
+      { nome:"Expansão Cluster 198 - São Vicente do Seridó - PB", clusters:[198], cidade:"São Vicente do Seridó", status:"Avaliação coordenador", projetista:"Yuri", valor:30608.42, portas:24, clientes:11 },
+      { nome:"Projetado Clusters 13, 119, 329 e 394 - Cubati - PB", clusters:[13,119,329,394], cidade:"Cubati", status:"Avaliação coordenador", projetista:"Yuri", valor:307917.78, portas:264, clientes:123 },
+      { nome:"Projetado Cluster 18 - Capim Grosso - BA", clusters:[18], cidade:"Capim Grosso", status:"Avaliação coordenador", projetista:"Aluisio Felix", valor:150146.69, portas:160, clientes:76 },
+      { nome:"Expansão Cluster 396 - São Vicente do Seridó - PB", clusters:[396], cidade:"São Vicente do Seridó", status:"Avaliação coordenador", projetista:"João Victor", valor:20701.10, portas:16, clientes:6 },
+      { nome:"Expansão Cluster 201 - São João do Rio do Peixe - PB", clusters:[201], cidade:"São João do Rio do Peixe", status:"Avaliação gerência", projetista:"Yuri", valor:72911, portas:72, clientes:11 },
+      { nome:"Expansão Cluster 39 - Ponto Novo - BA", clusters:[39], cidade:"Ponto Novo", status:"Avaliação gerência", projetista:"Aluisio Felix", valor:49269.50, portas:80, clientes:40 },
+      { nome:"Projeto Cluster 143 - Capim Grosso - BA", clusters:[143], cidade:"Capim Grosso", status:"Aguard. aprovação diretoria", projetista:"Aluisio Felix", valor:87366, portas:184, clientes:141 },
+      { nome:"Projeto Cluster 155, 326 e 358 - Jacobina - BA", clusters:[155,326,358], cidade:"Jacobina", status:"Aguard. aprovação diretoria", projetista:"Jheydson", valor:159756, portas:256, clientes:153 },
+      { nome:"Projeto Cluster 137 - Capim Grosso - BA", clusters:[137], cidade:"Capim Grosso", status:"Aguard. aprovação diretoria", projetista:"Brendo", valor:27344, portas:72, clientes:137 },
+      { nome:"Expansão Cluster 273 - Junco do Seridó - PB", clusters:[273], cidade:"Junco do Seridó", status:"Aguard. aprovação diretoria", projetista:"Rafael Paiva", valor:226361, portas:176, clientes:31 },
+      { nome:"Expansão Clusters 69, 97, 171, 324 e 328 - Cubati - PB", clusters:[69,97,171,324,328], cidade:"Cubati", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:227702, portas:208, clientes:74 },
+      { nome:"Expansão Cluster 320 - São Vicente do Seridó - PB", clusters:[320], cidade:"São Vicente do Seridó", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:29957, portas:24, clientes:7 },
+      { nome:"Expansão Cluster 118, 125, 383 e 384 - São Vicente do Seridó - PB", clusters:[118,125,383,384], cidade:"São Vicente do Seridó", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:115962, portas:208, clientes:47 },
+      { nome:"Expansão Cluster 173 - Triunfo - PB", clusters:[173], cidade:"Triunfo", status:"Aguard. aprovação diretoria", projetista:"João Victor", valor:10216, portas:24, clientes:13 },
+      { nome:"Expansão Cluster 387 - Juazeirinho - PB", clusters:[387], cidade:"Juazeirinho", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:4650, portas:16, clientes:6 },
+      { nome:"2ª Opção - Expansão Cluster 273 - Junco do Seridó - PB", clusters:[273], cidade:"Junco do Seridó", status:"Aguard. aprovação diretoria", projetista:"Rafael Paiva", valor:226712, portas:176, clientes:31 },
+    ];
+
+    const PIPELINE = [
+      { status:"Em desenvolvimento", color:"#fdab3d" },
+      { status:"Aguardando vistoria", color:"#579bfc" },
+      { status:"Vistoria concluída", color:"#00c875" },
+      { status:"Avaliação supervisor", color:"#a25ddc" },
+      { status:"Avaliação coordenador", color:"#7e3b8a" },
+      { status:"Avaliação gerência", color:"#ff642e" },
+      { status:"Aguard. aprovação diretoria", color:"#e2445c" },
+      { status:"Em correção", color:"#4eccc6" },
+    ];
+    const statusColorMap = Object.fromEntries(PIPELINE.map(p => [p.status, p.color]));
+    const PCOLORS = ["#0073ea","#00c875","#e2445c","#fdab3d","#a25ddc","#ff642e","#579bfc","#03c4eb"];
+
+    const projetos = mondayProjetos.map(p => ({
+      ...p,
+      qtdClusters: p.clusters.length,
+      clientesPlanilha: p.clientes || 0,
+    }));
+
+    // ─── CONSTANTES ───────────────────────────────────────────────────────────────
+    const TOTAL_CLUSTERS = 473, JA_RESOLVIDOS = 191, UNIVERSO_REAL = 282;
+    const totalEmPipeline = projetos.reduce((s, p) => s + p.qtdClusters, 0);
+    const totalPendente = UNIVERSO_REAL - totalEmPipeline;
+    const totalEmDesenv = projetos.filter(p => p.status === "Em desenvolvimento").reduce((s, p) => s + p.qtdClusters, 0);
+    const totalAProjetar = totalPendente + totalEmDesenv;
+    const totalValor = 6206391.11;
+    const totalClientes = projetos.reduce((s, p) => s + p.clientesPlanilha, 0);
+    const totalPortas = 7176;
+    const mediaPorPorta = totalValor / totalPortas;
+
+    // ─── HELPERS ─────────────────────────────────────────────────────────────────
+    const FERIADOS = ["2026-04-21","2026-05-01"];
+    const FERIADOS_VIST = ["2026-04-21","2026-05-01"];
+
+    function isUtil(d, flist) {
+      const w = d.getDay();
+      if (w === 0 || w === 6) return false;
+      return !flist.includes(d.toISOString().split("T")[0]);
+    }
+    function getDiasUteis(start, n, flist) {
+      const dias = []; let d = new Date(start);
+      while (dias.length < n) { if (isUtil(d, flist)) dias.push(new Date(d)); d.setDate(d.getDate() + 1); }
+      return dias;
+    }
+    function agruparSemanas(arr) {
+      const map = {};
+      arr.forEach(d => {
+        const mon = new Date(d.dia); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+        const k = mon.toISOString().split("T")[0];
+        if (!map[k]) map[k] = { inicio: new Date(mon), dias: [] };
+        map[k].dias.push(d);
+      });
+      return Object.values(map);
+    }
+    const fmt = v => new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL", maximumFractionDigits:0 }).format(v);
+    const fmtN = v => new Intl.NumberFormat("pt-BR").format(v);
+    const fmtShort = d => d.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" });
+    const fmtFull = d => d.toLocaleDateString("pt-BR", { weekday:"short", day:"2-digit", month:"2-digit" });
+
+    // ─── CRONOGRAMA PROJETOS ──────────────────────────────────────────────────────
+    const PROJETISTAS = ["Projetista 1","Projetista 2","Projetista 3"];
+    const CRON_START = new Date("2026-04-13");
+    const nDiasProj = Math.ceil(totalAProjetar / 6);
+    const diasProj = getDiasUteis(CRON_START, nDiasProj, FERIADOS);
+    const fimProj = diasProj[diasProj.length - 1];
+    let cg = 1;
+    const allDiasProj = diasProj.map(dia => {
+      const clustersHoje = [];
+      PROJETISTAS.forEach(p => {
+        const ini = cg, fim = Math.min(cg + 1, totalAProjetar);
+        if (ini <= totalAProjetar) { clustersHoje.push({ projetista:p, de:ini, ate:fim, qtd:fim-ini+1 }); cg += 2; }
+      });
+      return { dia, clustersHoje, total: clustersHoje.reduce((s, c) => s + c.qtd, 0) };
+    });
+    const acumProj = allDiasProj.reduce((acc, d, i) => { acc.push((acc[i-1]||0) + d.total); return acc; }, []);
+    const semanasProj = agruparSemanas(allDiasProj);
+
+    // ─── CRONOGRAMA VISTORIA ──────────────────────────────────────────────────────
+    const TOTAL_VISTORIA = 232;
+    const VIST_POR_DIA = 6;
+    const VIST_START = new Date("2026-04-08");
+    const nDiasVist = Math.ceil(TOTAL_VISTORIA / VIST_POR_DIA);
+    const diasVist = getDiasUteis(VIST_START, nDiasVist, FERIADOS_VIST);
+    const fimVist = diasVist[diasVist.length - 1];
+    const jaAguardando = projetos.filter(p => p.status === "Aguardando vistoria");
+    const listaVist = [
+      ...jaAguardando.map(p => ({ nome:p.nome, cidade:p.cidade, tipo:"pipeline" })),
+      ...Array.from({ length: totalAProjetar }, (_, k) => ({ nome:`Cluster pendente #${k+1}`, cidade:"a projetar", tipo:"novo" })),
+    ];
+    const allDiasVist = diasVist.map((dia, i) => ({ dia, projsDia: listaVist.slice(i * VIST_POR_DIA, i * VIST_POR_DIA + VIST_POR_DIA) }));
+    const semanasVist = agruparSemanas(allDiasVist);
+
+    // ─── GANTT ────────────────────────────────────────────────────────────────────
+    function GanttChart({ semanas, inicio, fim, corBarra, feriados, tipo }) {
+      const totalDias = Math.ceil((fim - inicio) / (1000*60*60*24)) + 1;
+
+      const allDays = [];
+      const cur = new Date(inicio);
+      while (cur <= fim) { allDays.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+
+      const meses = [];
+      allDays.forEach((d, i) => {
+        const m = d.getMonth();
+        if (!meses.length || meses[meses.length-1].mes !== m) meses.push({ mes:m, label:d.toLocaleDateString("pt-BR",{month:"short"}), count:1 });
+        else meses[meses.length-1].count++;
+      });
+
+      const pct = d => (Math.ceil((d - inicio) / (1000*60*60*24)) / totalDias) * 100;
+      const W = 100 / totalDias;
+      const HOJE = new Date("2026-04-10");
+      const hojeVisible = HOJE >= inicio && HOJE <= fim;
+      const hojeLeft = hojeVisible ? pct(HOJE) : null;
+
+      return (
+        <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginBottom:16, overflowX:"auto" }}>
+          <div style={{ fontWeight:700, fontSize:14, marginBottom:14, color:"#1f1f1f" }}>📊 Gráfico de Gantt</div>
+          <div style={{ minWidth:560 }}>
+            <div style={{ display:"flex", marginBottom:4, marginLeft:124 }}>
+              {meses.map((m, i) => (
+                <div key={i} style={{ width:`${(m.count/totalDias)*100}%`, fontSize:10, fontWeight:700, color:"#0073ea", textAlign:"center", borderLeft:"1px solid #e8e8e8", paddingLeft:3 }}>
+                  {m.label.toUpperCase()}
+                </div>
+              ))}
+            </div>
+
+            {semanas.map((s, si) => {
+              const dIni = s.dias[0].dia;
+              const dFim = s.dias[s.dias.length-1].dia;
+              const left = pct(dIni);
+              const width = ((Math.ceil((dFim - dIni) / (1000*60*60*24)) + 1) / totalDias) * 100;
+              const totalSem = tipo === "vistoria"
+                ? s.dias.reduce((a, d) => a + d.projsDia.length, 0)
+                : s.dias.reduce((a, d) => a + d.total, 0);
+              const temFeriado = feriados.some(f => { const fd = new Date(f); return fd >= dIni && fd <= dFim; });
+
+              return (
+                <div key={si} style={{ display:"flex", alignItems:"center", marginBottom:6 }}>
+                  <div style={{ width:124, flexShrink:0, fontSize:11, color:"#555", fontWeight:600, paddingRight:8, textAlign:"right" }}>
+                    Sem. {si+1}
+                    <div style={{ fontSize:9, color:"#bbb", fontWeight:400 }}>{fmtShort(dIni)}–{fmtShort(dFim)}</div>
+                  </div>
+                  <div style={{ flex:1, position:"relative", height:28, background:"#f5f6f8", borderRadius:6, overflow:"hidden" }}>
+                    {feriados.map(f => {
+                      const fd = new Date(f);
+                      if (fd < inicio || fd > fim) return null;
+                      return (
+                        <div key={f} style={{ position:"absolute", left:`${pct(fd)}%`, top:0, width:`${W*1.5}%`, height:"100%", background:"#ffe0e0", zIndex:1 }} />
+                      );
+                    })}
+                    <div style={{ position:"absolute", left:`${left}%`, width:`${width}%`, height:"100%", background:corBarra, borderRadius:6, display:"flex", alignItems:"center", paddingLeft:8, zIndex:2, opacity:0.88 }}>
+                      <span style={{ fontSize:10, fontWeight:700, color:"#fff", whiteSpace:"nowrap" }}>
+                        {tipo === "vistoria" ? `${totalSem} vistorias` : `${totalSem} clusters`}{temFeriado ? " 🚫" : ""}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div style={{ display:"flex", marginTop:4 }}>
+              <div style={{ width:124, flexShrink:0 }} />
+              <div style={{ flex:1, position:"relative", height:18 }}>
+                {allDays.filter(d => d.getDay() === 1).map((d, i) => (
+                  <div key={i} style={{ position:"absolute", left:`${pct(d)}%`, top:0, width:1, height:"100%", background:"#e8e8e8" }} />
+                ))}
+                {hojeVisible && (
+                  <div style={{ position:"absolute", left:`${hojeLeft}%`, top:0, width:2, height:"100%", background:"#e2445c", zIndex:3 }}>
+                    <div style={{ position:"absolute", top:-13, left:-14, fontSize:9, color:"#e2445c", fontWeight:700, whiteSpace:"nowrap", background:"#fff", padding:"1px 3px", borderRadius:3 }}>hoje</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display:"flex", gap:16, marginTop:10, marginLeft:124, fontSize:10, color:"#888", flexWrap:"wrap" }}>
+              <span><span style={{ display:"inline-block", width:12, height:10, background:corBarra, borderRadius:2, marginRight:4, opacity:0.88 }} />Semana ativa</span>
+              <span><span style={{ display:"inline-block", width:12, height:10, background:"#ffe0e0", border:"1px solid #ffb3b3", borderRadius:2, marginRight:4 }} />Feriado</span>
+              <span><span style={{ display:"inline-block", width:2, height:10, background:"#e2445c", marginRight:4 }} />Hoje (10/04)</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── COMPONENTES UI ───────────────────────────────────────────────────────────
+    function StatCard({ label, value, sub, color, icon }) {
+      return (
+        <div style={{ background:"#fff", borderRadius:14, padding:"15px 18px", boxShadow:"0 2px 10px rgba(0,0,0,0.07)", borderLeft:`4px solid ${color}`, flex:1, minWidth:120 }}>
+          <div style={{ fontSize:10, color:"#999", marginBottom:3, fontWeight:500 }}>{icon} {label}</div>
+          <div style={{ fontSize:22, fontWeight:800, color, letterSpacing:-0.5 }}>{value}</div>
+          {sub && <div style={{ fontSize:10, color:"#bbb", marginTop:2 }}>{sub}</div>}
+        </div>
+      );
+    }
+    function Badge({ status }) {
+      return <span style={{ background:statusColorMap[status]||"#c4c4c4", color:"#fff", borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700, whiteSpace:"nowrap" }}>{status}</span>;
+    }
+    function PBar({ value, max, color, h=8 }) {
+      return (
+        <div style={{ background:"#f0f0f0", borderRadius:8, height:h, overflow:"hidden" }}>
+          <div style={{ width:`${Math.min((value/max)*100,100)}%`, height:"100%", background:color, borderRadius:8 }} />
+        </div>
+      );
+    }
+
+    // ─── APP ─────────────────────────────────────────────────────────────────────
+    function App() {
+      const [modulo, setModulo] = useState("dashboard");
+      const [tab, setTab] = useState("overview");
+      const [cronTab, setCronTab] = useState("gantt");
+      const [vistTab, setVistTab] = useState("gantt");
+      const [semSel, setSemSel] = useState(-1);
+      const [semVSel, setSemVSel] = useState(-1);
+      const [search, setSearch] = useState("");
+      const [fStatus, setFStatus] = useState("all");
+
+      const filtered = projetos.filter(p => {
+        const ms = !search || p.nome.toLowerCase().includes(search.toLowerCase()) || p.projetista.toLowerCase().includes(search.toLowerCase()) || p.cidade.toLowerCase().includes(search.toLowerCase());
+        return ms && (fStatus === "all" || p.status === fStatus);
+      });
+      const porStatus = PIPELINE.map(s => ({ ...s, items: projetos.filter(p => p.status === s.status) }));
+      const porProj = {};
+      projetos.forEach(p => {
+        const k = p.projetista || "Sem projetista";
+        if (!porProj[k]) porProj[k] = { count:0, clusters:0, valor:0, clientes:0 };
+        porProj[k].count++; porProj[k].clusters += p.qtdClusters; porProj[k].valor += p.valor; porProj[k].clientes += p.clientesPlanilha;
+      });
+
+      const tabBtn = (val, cur, set, label) => (
+        <button key={val} onClick={() => set(val)} style={{ padding:"7px 16px", borderRadius:20, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:cur===val?"#0073ea":"#fff", color:cur===val?"#fff":"#555", boxShadow:"0 1px 4px rgba(0,0,0,0.08)" }}>{label}</button>
+      );
+
+      return (
+        <div style={{ fontFamily:"'Segoe UI',sans-serif", background:"#f0f2f5", minHeight:"100vh" }}>
+          {/* Nav */}
+          <div style={{ background:"#1f1f2e", padding:"0 20px", display:"flex", alignItems:"center", gap:4, height:52, boxShadow:"0 2px 8px rgba(0,0,0,0.2)" }}>
+            <div style={{ color:"#fff", fontWeight:800, fontSize:14, marginRight:20 }}>📡 Migração Rádio</div>
+            {[["dashboard","📡 Dashboard"],["cronograma","📅 Proj. Clusters"],["vistoria","🔍 Vistoria"]].map(([m,l]) => (
+              <button key={m} onClick={() => setModulo(m)} style={{ padding:"6px 16px", borderRadius:8, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:modulo===m?"#0073ea":"transparent", color:modulo===m?"#fff":"#aaa" }}>{l}</button>
+            ))}
+          </div>
+
+          <div style={{ padding:20 }}>
+
+            {/* ══ DASHBOARD ══ */}
+            {modulo === "dashboard" && (
+              <div>
+                <div style={{ marginBottom:16 }}>
+                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 12/04/2026</div>
+                </div>
+                <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+                  {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
+                </div>
+
+                {tab === "overview" && (
+                  <div>
+                    <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
+                      <StatCard icon="📋" label="Total Clusters" value={fmtN(TOTAL_CLUSTERS)} sub={`${JA_RESOLVIDOS} já resolvidos`} color="#0073ea" />
+                      <StatCard icon="✅" label="Já resolvidos" value={fmtN(JA_RESOLVIDOS)} sub="FTTH ou proj. existente" color="#00c875" />
+                      <StatCard icon="🎯" label="Pendentes" value={fmtN(totalPendente)} sub={`de ${UNIVERSO_REAL} a projetar`} color="#7e3b8a" />
+                      <StatCard icon="🔄" label="Em pipeline" value={fmtN(totalEmPipeline)} sub={`${((totalEmPipeline/UNIVERSO_REAL)*100).toFixed(1)}% do universo`} color="#579bfc" />
+                      <StatCard icon="🔌" label="Total Portas" value={fmtN(totalPortas)} sub="portas projetadas" color="#03c4eb" />
+                      <StatCard icon="📐" label="Média p/ Porta" value={fmt(mediaPorPorta)} sub="valor médio por porta" color="#00c875" />
+                      <StatCard icon="💰" label="Valor total" value={fmt(totalValor)} sub="projetado" color="#ff642e" />
+                    </div>
+                    <div style={{ background:"#fff", borderRadius:14, padding:20, marginBottom:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                      <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Progresso Geral</div>
+                      <div style={{ display:"flex", height:32, borderRadius:10, overflow:"hidden", marginBottom:10 }}>
+                        <div style={{ width:`${(JA_RESOLVIDOS/TOTAL_CLUSTERS)*100}%`, background:"#c4c4c4", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700 }}>{JA_RESOLVIDOS}</div>
+                        <div style={{ width:`${(totalEmPipeline/TOTAL_CLUSTERS)*100}%`, background:"#0073ea", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700 }}>{totalEmPipeline}</div>
+                        <div style={{ flex:1, background:"#fde8e8", display:"flex", alignItems:"center", justifyContent:"center", color:"#e2445c", fontSize:11, fontWeight:700 }}>{totalPendente}</div>
+                      </div>
+                      <div style={{ display:"flex", gap:20, fontSize:11, color:"#666" }}>
+                        <span>⬜ {JA_RESOLVIDOS} resolvidos</span>
+                        <span>🔵 {totalEmPipeline} pipeline</span>
+                        <span>🔴 {totalPendente} pendentes</span>
+                      </div>
+                    </div>
+                    {/* Clusters por Estado */}
+                    {(() => {
+                      const UFS = ["BA","PB","PE","RN"];
+                      const ufColors = {"BA":"#0073ea","PB":"#00c875","PE":"#fdab3d","RN":"#a25ddc"};
+                      const clusterUF = {
+                        155:"BA",145:"BA",201:"BA",158:"BA",291:"BA",143:"BA",137:"BA",166:"BA",170:"BA",163:"BA",177:"BA",244:"BA",139:"BA",169:"BA",230:"BA",150:"BA",156:"BA",167:"BA",140:"BA",151:"BA",232:"BA",256:"BA",224:"BA",212:"BA",288:"BA",172:"BA",188:"BA",322:"BA",184:"BA",175:"BA",264:"BA",148:"BA",305:"BA",203:"BA",233:"BA",387:"BA",157:"BA",396:"BA",228:"BA",335:"BA",205:"BA",270:"BA",323:"BA",257:"BA",160:"BA",214:"BA",231:"BA",352:"BA",153:"BA",173:"BA",269:"BA",235:"BA",283:"BA",180:"BA",261:"BA",262:"BA",243:"BA",389:"BA",193:"BA",240:"BA",349:"BA",356:"BA",149:"BA",206:"BA",174:"BA",282:"BA",272:"BA",273:"BA",144:"BA",204:"BA",221:"BA",225:"BA",248:"BA",350:"BA",216:"BA",250:"BA",343:"BA",309:"BA",340:"BA",407:"BA",236:"BA",189:"BA",242:"BA",277:"BA",365:"BA",176:"BA",259:"BA",308:"BA",373:"BA",146:"BA",181:"BA",198:"BA",237:"BA",263:"BA",301:"BA",311:"BA",381:"BA",399:"BA",179:"BA",238:"BA",304:"BA",286:"BA",410:"BA",154:"BA",178:"BA",220:"BA",197:"BA",239:"BA",251:"BA",268:"BA",316:"BA",367:"BA",306:"BA",183:"BA",209:"BA",310:"BA",315:"BA",390:"BA",168:"BA",211:"BA",260:"BA",298:"BA",329:"BA",357:"BA",358:"BA",368:"BA",372:"BA",208:"BA",279:"BA",404:"BA",348:"BA",377:"BA",419:"BA",200:"BA",207:"BA",78:"BA",88:"BA",94:"BA",111:"BA",114:"BA",427:"BA",341:"BA",103:"BA",292:"BA",439:"BA",452:"BA",49:"BA",37:"BA",128:"BA",108:"BA",465:"BA",361:"BA",62:"BA",359:"BA",271:"BA",447:"BA",415:"BA",
+                        43:"PB",20:"PB",212:"PB",25:"PB",35:"PB",23:"PB",22:"PB",136:"PB",29:"PB",59:"PB",68:"PB",46:"PB",51:"PB",93:"PB",76:"PB",56:"PB",72:"PB",107:"PB",120:"PB",127:"PB",57:"PB",34:"PB",99:"PB",250:"PB",253:"PB",251:"PB",126:"PB",274:"PB",198:"PB",95:"PB",327:"PB",85:"PB",280:"PB",391:"PB",254:"PB",330:"PB",122:"PB",45:"PB",32:"PB",38:"PB",186:"PB",184:"PB",173:"PB",221:"PB",147:"PB",277:"PB",278:"PB",281:"PB",393:"PB",96:"PB",145:"PB",326:"PB",276:"PB",275:"PB",398:"PB",199:"PB",220:"PB",282:"PB",392:"PB",399:"PB",69:"PB",97:"PB",171:"PB",324:"PB",328:"PB",320:"PB",118:"PB",125:"PB",383:"PB",384:"PB",387:"PB",273:"PB",13:"PB",119:"PB",329:"PB",394:"PB",
+                        7:"PE",6:"PE",14:"PE",18:"PE",16:"PE",11:"PE",19:"PE",17:"PE",
+                        113:"RN",131:"RN",134:"RN",132:"RN",133:"RN",
+                      };
+                      const pipelineUF = {};
+                      UFS.forEach(u => { pipelineUF[u] = 0; });
+                      projetos.forEach(p => {
+                        p.clusters.forEach(c => {
+                          const u = clusterUF[c];
+                          if (u && pipelineUF[u] !== undefined) pipelineUF[u]++;
+                        });
+                      });
+                      const totalUF = {BA:0,PB:0,PE:0,RN:0};
+                      Object.entries(clusterUF).forEach(([,u]) => { if(totalUF[u]!==undefined) totalUF[u]++; });
+                      const pendentesUF = {};
+                      UFS.forEach(u => { pendentesUF[u] = Math.max(0, (totalUF[u]||0) - (pipelineUF[u]||0)); });
+
+                      return (
+                        <div style={{ display:"flex", gap:14, flexWrap:"wrap", marginBottom:14 }}>
+                          <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
+                            <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>🔵 Clusters em Pipeline por Estado</div>
+                            {UFS.map(u => (
+                              <div key={u} style={{ marginBottom:10 }}>
+                                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
+                                  <span style={{ fontWeight:700, color:ufColors[u] }}>{u}</span>
+                                  <span style={{ color:"#888" }}>{pipelineUF[u]} clusters</span>
+                                </div>
+                                <PBar value={pipelineUF[u]} max={totalEmPipeline} color={ufColors[u]} h={10} />
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
+                            <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>🔴 Clusters Pendentes por Estado</div>
+                            {UFS.map(u => (
+                              <div key={u} style={{ marginBottom:10 }}>
+                                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
+                                  <span style={{ fontWeight:700, color:ufColors[u] }}>{u}</span>
+                                  <span style={{ color:"#888" }}>{pendentesUF[u]} clusters</span>
+                                </div>
+                                <PBar value={pendentesUF[u]} max={Math.max(...Object.values(pendentesUF))} color={ufColors[u]} h={10} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
+                      <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:2, minWidth:260 }}>
+                        <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Clusters por Status</div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                          {porStatus.map(s => {
+                            const total = s.items.reduce((a, p) => a + p.qtdClusters, 0);
+                            return (
+                              <div key={s.status} style={{ background:"#f8f9fb", borderRadius:10, padding:"12px 14px", textAlign:"center", minWidth:72, borderTop:`4px solid ${s.color}`, opacity:total===0?0.3:1, flex:1 }}>
+                                <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{total}</div>
+                                <div style={{ fontSize:9, color:"#666", marginTop:3, lineHeight:1.3 }}>{s.status}</div>
+                                <div style={{ fontSize:9, color:"#bbb" }}>{s.items.length} proj.</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
+                        <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Top Cidades</div>
+                        {Object.entries(projetos.reduce((acc, p) => { acc[p.cidade] = (acc[p.cidade]||0) + p.qtdClusters; return acc; }, {})).sort((a,b) => b[1]-a[1]).slice(0,6).map(([cidade,cnt],i) => (
+                          <div key={cidade} style={{ marginBottom:10 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
+                              <span style={{ fontWeight:500 }}>{cidade}</span><span style={{ color:"#888" }}>{cnt}</span>
+                            </div>
+                            <PBar value={cnt} max={totalEmPipeline} color={PCOLORS[i%PCOLORS.length]} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {tab === "pipeline" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                    {porStatus.filter(s => s.items.length > 0).map(s => (
+                      <div key={s.status} style={{ background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                        <div style={{ padding:"12px 18px", background:s.color, color:"#fff", fontWeight:700, fontSize:13, display:"flex", justifyContent:"space-between" }}>
+                          <span>{s.status}</span>
+                          <span style={{ background:"rgba(255,255,255,0.2)", borderRadius:20, padding:"2px 10px", fontSize:12 }}>{s.items.reduce((a,p)=>a+p.qtdClusters,0)} clusters · {s.items.length} proj.</span>
+                        </div>
+                        {s.items.map((p, j) => (
+                          <div key={j} style={{ padding:"10px 18px", borderBottom:j<s.items.length-1?"1px solid #f5f5f5":"none", display:"flex", justifyContent:"space-between", gap:8, alignItems:"center" }}>
+                            <div style={{ flex:1 }}>
+                              <div style={{ color:"#333", fontWeight:600, fontSize:13 }}>{p.nome}</div>
+                              <div style={{ fontSize:11, color:"#aaa", marginTop:2 }}>{p.cidade} · {p.qtdClusters} cluster{p.qtdClusters>1?"s":""} · {fmtN(p.clientesPlanilha)} clientes <span style={{ color:"#579bfc" }}>[{p.clusters.join(", ")}]</span></div>
+                            </div>
+                            <span style={{ color:"#0073ea", fontWeight:700, whiteSpace:"nowrap", fontSize:12 }}>{p.valor>0?fmt(p.valor):"—"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {tab === "projetos" && (
+                  <div>
+                    <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap" }}>
+                      <input placeholder="🔍 Buscar..." value={search} onChange={e => setSearch(e.target.value)} style={{ padding:"9px 16px", borderRadius:20, border:"1px solid #e0e0e0", fontSize:12, flex:1, minWidth:200, outline:"none" }} />
+                      <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={{ padding:"9px 14px", borderRadius:20, border:"1px solid #e0e0e0", fontSize:12, background:"#fff", cursor:"pointer" }}>
+                        <option value="all">Todos os status</option>
+                        {PIPELINE.map(s => <option key={s.status} value={s.status}>{s.status}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ background:"#fff", borderRadius:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", overflowX:"auto" }}>
+                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                        <thead>
+                          <tr style={{ background:"#f8f9fb" }}>
+                            {["Projeto","Cidade","Projetista","Status","Clusters","Qtd","Clientes","Valor"].map(h => (
+                              <th key={h} style={{ padding:"11px 14px", textAlign:"left", color:"#555", fontWeight:700, borderBottom:"2px solid #eee", whiteSpace:"nowrap" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.length === 0 && <tr><td colSpan={8} style={{ padding:24, textAlign:"center", color:"#aaa" }}>Nenhum resultado</td></tr>}
+                          {filtered.map((p, i) => (
+                            <tr key={i} style={{ background:i%2===0?"#fff":"#fafafa" }}>
+                              <td style={{ padding:"10px 14px", color:"#333", borderBottom:"1px solid #f0f0f0", maxWidth:220, fontWeight:500 }}>{p.nome}</td>
+                              <td style={{ padding:"10px 14px", borderBottom:"1px solid #f0f0f0", whiteSpace:"nowrap", color:"#555" }}>{p.cidade}</td>
+                              <td style={{ padding:"10px 14px", color:"#555", borderBottom:"1px solid #f0f0f0", whiteSpace:"nowrap" }}>{p.projetista||"—"}</td>
+                              <td style={{ padding:"10px 14px", borderBottom:"1px solid #f0f0f0" }}><Badge status={p.status} /></td>
+                              <td style={{ padding:"10px 14px", borderBottom:"1px solid #f0f0f0", fontSize:10, color:"#579bfc", maxWidth:140 }}>[{p.clusters.join(", ")}]</td>
+                              <td style={{ padding:"10px 14px", borderBottom:"1px solid #f0f0f0", textAlign:"center", fontWeight:800, color:"#0073ea" }}>{p.qtdClusters}</td>
+                              <td style={{ padding:"10px 14px", borderBottom:"1px solid #f0f0f0", textAlign:"right" }}>{fmtN(p.clientesPlanilha)||"—"}</td>
+                              <td style={{ padding:"10px 14px", borderBottom:"1px solid #f0f0f0", textAlign:"right", fontWeight:700, color:"#ff642e", whiteSpace:"nowrap" }}>{p.valor>0?fmt(p.valor):"—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{ fontSize:11, color:"#aaa", marginTop:8, textAlign:"right" }}>{filtered.length} projetos · {filtered.reduce((s,p)=>s+p.qtdClusters,0)} clusters</div>
+                  </div>
+                )}
+
+                {tab === "projetistas" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                    {Object.entries(porProj).sort((a,b) => b[1].clusters-a[1].clusters).map(([nome,d],i) => (
+                      <div key={nome} style={{ background:"#fff", borderRadius:14, padding:16, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+                        <div style={{ width:44, height:44, borderRadius:"50%", background:PCOLORS[i%PCOLORS.length], display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:16, flexShrink:0 }}>{nome.charAt(0)}</div>
+                        <div style={{ flex:1, minWidth:130 }}>
+                          <div style={{ fontWeight:700, color:"#1f1f1f", fontSize:14 }}>{nome}</div>
+                          <div style={{ fontSize:11, color:"#888", marginTop:2 }}>{d.count} proj. · {d.clusters} clusters · {fmtN(d.clientes)} clientes</div>
+                          <PBar value={d.clusters} max={totalEmPipeline} color={PCOLORS[i%PCOLORS.length]} h={6} />
+                        </div>
+                        <div style={{ textAlign:"right" }}>
+                          <div style={{ fontSize:15, fontWeight:800, color:"#0073ea" }}>{fmt(d.valor)}</div>
+                          <div style={{ fontSize:10, color:"#aaa" }}>{((d.clusters/totalEmPipeline)*100).toFixed(1)}% do pipeline</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ══ CRONOGRAMA PROJETOS ══ */}
+            {modulo === "cronograma" && (
+              <div>
+                <div style={{ marginBottom:16 }}>
+                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma de Projetos</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalAProjetar} clusters · 3 projetistas · 2/dia cada · {fmtShort(CRON_START)} → {fmtShort(fimProj)}/2026</div>
+                </div>
+                <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
+                  {[
+                    { label:"A projetar", value:String(totalAProjetar), sub:`${totalPendente} pend. + ${totalEmDesenv} desenv.`, color:"#e2445c", icon:"⏳" },
+                    { label:"Projetistas", value:"3", sub:"2 clusters/dia cada", color:"#0073ea", icon:"👷" },
+                    { label:"Cap./dia", value:"6", sub:"clusters", color:"#a25ddc", icon:"⚡" },
+                    { label:"Dias úteis", value:String(nDiasProj), sub:"desc. feriados", color:"#fdab3d", icon:"📆" },
+                    { label:"Início", value:"13/04", sub:"2026", color:"#579bfc", icon:"🚀" },
+                    { label:"Término", value:fmtShort(fimProj), sub:"2026", color:"#00c875", icon:"🏁" },
+                  ].map(c => (
+                    <div key={c.label} style={{ background:"#fff", borderRadius:14, padding:"14px 16px", boxShadow:"0 2px 10px rgba(0,0,0,0.07)", borderLeft:`4px solid ${c.color}`, flex:1, minWidth:90 }}>
+                      <div style={{ fontSize:10, color:"#999", marginBottom:2 }}>{c.icon} {c.label}</div>
+                      <div style={{ fontSize:20, fontWeight:800, color:c.color }}>{c.value}</div>
+                      <div style={{ fontSize:10, color:"#bbb" }}>{c.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display:"flex", gap:8, marginBottom:16 }}>
+                  {[["gantt","📊 Gantt"],["resumo","Resumo"],["semanal","Por Semana"],["diario","Dia a Dia"]].map(([t,l]) => tabBtn(t, cronTab, setCronTab, l))}
+                </div>
+
+                {cronTab === "gantt" && (
+                  <GanttChart semanas={semanasProj} inicio={CRON_START} fim={fimProj} corBarra="#0073ea" feriados={FERIADOS} tipo="projetos" />
+                )}
+
+                {cronTab === "resumo" && (
+                  <div>
+                    <div style={{ background:"#fff", borderRadius:14, padding:20, marginBottom:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                      <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Conclusão por Semana</div>
+                      {semanasProj.map((s, i) => {
+                        const ts = s.dias.reduce((a,d) => a+d.total, 0);
+                        const ai = i===0 ? 0 : semanasProj.slice(0,i).reduce((a,w) => a+w.dias.reduce((b,d) => b+d.total,0), 0);
+                        return (
+                          <div key={i} style={{ marginBottom:12 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:4 }}>
+                              <span style={{ fontWeight:600 }}>Semana {i+1} <span style={{ fontWeight:400, color:"#aaa" }}>({fmtShort(s.dias[0].dia)}–{fmtShort(s.dias[s.dias.length-1].dia)})</span></span>
+                              <span style={{ color:"#888" }}>{ts} clusters → <b>{ai+ts}/{totalAProjetar}</b></span>
+                            </div>
+                            <PBar value={ai+ts} max={totalAProjetar} color={PCOLORS[i%PCOLORS.length]} h={10} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                      <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Carga por Projetista</div>
+                      {PROJETISTAS.map((p, i) => {
+                        const total = allDiasProj.reduce((s,d) => { const c = d.clustersHoje.find(c => c.projetista===p); return s+(c?c.qtd:0); }, 0);
+                        return (
+                          <div key={p} style={{ marginBottom:14 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:4 }}>
+                              <span style={{ fontWeight:700, color:PCOLORS[i] }}>👷 {p}</span>
+                              <span style={{ color:"#888" }}>{total} clusters · {Math.ceil(total/2)} dias</span>
+                            </div>
+                            <PBar value={total} max={totalAProjetar} color={PCOLORS[i]} h={10} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {cronTab === "semanal" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                    {semanasProj.map((s, i) => {
+                      const ts = s.dias.reduce((a,d) => a+d.total, 0);
+                      const ai = i===0 ? 0 : semanasProj.slice(0,i).reduce((a,w) => a+w.dias.reduce((b,d) => b+d.total,0), 0);
+                      const open = semSel === i;
+                      return (
+                        <div key={i} style={{ background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                          <div onClick={() => setSemSel(open?-1:i)} style={{ padding:"13px 18px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", background:open?"#f0f7ff":"#fff" }}>
+                            <div><span style={{ fontWeight:700, fontSize:13 }}>Semana {i+1}</span><span style={{ fontSize:11, color:"#aaa", marginLeft:8 }}>{fmtFull(s.dias[0].dia)} → {fmtFull(s.dias[s.dias.length-1].dia)}</span></div>
+                            <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                              <span style={{ fontSize:12, color:"#0073ea", fontWeight:700 }}>{ts} clusters</span>
+                              <span style={{ fontSize:11, color:"#aaa" }}>acum. {ai+ts}/{totalAProjetar}</span>
+                              <span style={{ color:"#aaa" }}>{open?"▲":"▼"}</span>
+                            </div>
+                          </div>
+                          {open && (
+                            <div style={{ padding:"0 18px 14px", overflowX:"auto" }}>
+                              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                                <thead>
+                                  <tr style={{ background:"#f8f9fb" }}>
+                                    <th style={{ padding:"8px 10px", textAlign:"left", color:"#555", fontWeight:600, borderBottom:"1px solid #eee" }}>Dia</th>
+                                    {PROJETISTAS.map((p, pi) => <th key={p} style={{ padding:"8px 10px", color:PCOLORS[pi], fontWeight:700, borderBottom:"1px solid #eee" }}>{p}</th>)}
+                                    <th style={{ padding:"8px 10px", textAlign:"center", color:"#555", fontWeight:600, borderBottom:"1px solid #eee" }}>Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {s.dias.map((d, j) => (
+                                    <tr key={j} style={{ background:j%2===0?"#fff":"#fafafa" }}>
+                                      <td style={{ padding:"8px 10px", borderBottom:"1px solid #f0f0f0", fontWeight:600, whiteSpace:"nowrap" }}>{fmtFull(d.dia)}</td>
+                                      {PROJETISTAS.map((p, pi) => {
+                                        const c = d.clustersHoje.find(c => c.projetista===p);
+                                        return <td key={p} style={{ padding:"8px 10px", borderBottom:"1px solid #f0f0f0", color:c?PCOLORS[pi]:"#ddd", fontWeight:c?600:400 }}>{c?`#${c.de}–${c.ate}`:"—"}</td>;
+                                      })}
+                                      <td style={{ padding:"8px 10px", borderBottom:"1px solid #f0f0f0", textAlign:"center", fontWeight:800, color:"#0073ea" }}>{d.total}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {cronTab === "diario" && (
+                  <div style={{ background:"#fff", borderRadius:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", overflowX:"auto" }}>
+                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                      <thead>
+                        <tr style={{ background:"#f8f9fb" }}>
+                          <th style={{ padding:"11px 14px", textAlign:"left", color:"#555", fontWeight:700, borderBottom:"2px solid #eee" }}>Dia</th>
+                          {PROJETISTAS.map((p,i) => <th key={p} style={{ padding:"11px 14px", color:PCOLORS[i], fontWeight:700, borderBottom:"2px solid #eee" }}>{p}</th>)}
+                          <th style={{ padding:"11px 14px", textAlign:"center", color:"#555", fontWeight:700, borderBottom:"2px solid #eee" }}>Dia</th>
+                          <th style={{ padding:"11px 14px", textAlign:"center", color:"#555", fontWeight:700, borderBottom:"2px solid #eee" }}>Acum.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allDiasProj.map((d, i) => (
+                          <tr key={i} style={{ background:i%2===0?"#fff":"#fafafa" }}>
+                            <td style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0", fontWeight:600, whiteSpace:"nowrap" }}>{fmtFull(d.dia)}</td>
+                            {PROJETISTAS.map((p, pi) => {
+                              const c = d.clustersHoje.find(c => c.projetista===p);
+                              return <td key={p} style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0", color:c?PCOLORS[pi]:"#ddd", whiteSpace:"nowrap", fontWeight:c?600:400 }}>{c?`#${c.de}–${c.ate}`:"—"}</td>;
+                            })}
+                            <td style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0", textAlign:"center", fontWeight:800, color:"#0073ea" }}>{d.total}</td>
+                            <td style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0", textAlign:"center" }}>
+                              <span style={{ background:acumProj[i]>=totalAProjetar?"#00c875":"#f0f0f0", color:acumProj[i]>=totalAProjetar?"#fff":"#555", borderRadius:20, padding:"2px 10px", fontWeight:700, fontSize:11 }}>{acumProj[i]}/{totalAProjetar}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ══ CRONOGRAMA VISTORIA ══ */}
+            {modulo === "vistoria" && (
+              <div>
+                <div style={{ marginBottom:16 }}>
+                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma de Vistorias</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_VISTORIA} projetos · 6/dia · {fmtShort(VIST_START)} → {fmtShort(fimVist)}/2026</div>
+                </div>
+                <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
+                  {[
+                    { label:"Total a vistoriar", value:String(TOTAL_VISTORIA), sub:"60 pipeline + 172 a projetar", color:"#e2445c", icon:"🔍" },
+                    { label:"Vistorias/dia", value:"6", sub:"média diária", color:"#0073ea", icon:"📋" },
+                    { label:"Dias úteis", value:String(nDiasVist), sub:"desc. feriados", color:"#fdab3d", icon:"📆" },
+                    { label:"Início", value:"08/04", sub:"2026", color:"#579bfc", icon:"🚀" },
+                    { label:"Término", value:fmtShort(fimVist), sub:"2026", color:"#00c875", icon:"🏁" },
+                  ].map(c => (
+                    <div key={c.label} style={{ background:"#fff", borderRadius:14, padding:"14px 16px", boxShadow:"0 2px 10px rgba(0,0,0,0.07)", borderLeft:`4px solid ${c.color}`, flex:1, minWidth:100 }}>
+                      <div style={{ fontSize:10, color:"#999", marginBottom:2 }}>{c.icon} {c.label}</div>
+                      <div style={{ fontSize:20, fontWeight:800, color:c.color }}>{c.value}</div>
+                      <div style={{ fontSize:10, color:"#bbb" }}>{c.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display:"flex", gap:8, marginBottom:16 }}>
+                  {[["gantt","📊 Gantt"],["resumo","Por Semana"],["diario","Dia a Dia"]].map(([t,l]) => tabBtn(t, vistTab, setVistTab, l))}
+                </div>
+
+                {vistTab === "gantt" && (
+                  <GanttChart semanas={semanasVist} inicio={VIST_START} fim={fimVist} corBarra="#579bfc" feriados={FERIADOS_VIST} tipo="vistoria" />
+                )}
+
+                {vistTab === "resumo" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                    {semanasVist.map((s, i) => {
+                      const ts = s.dias.reduce((a,d) => a+d.projsDia.length, 0);
+                      const ai = i===0 ? 0 : semanasVist.slice(0,i).reduce((a,w) => a+w.dias.reduce((b,d) => b+d.projsDia.length,0), 0);
+                      const open = semVSel === i;
+                      return (
+                        <div key={i} style={{ background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                          <div onClick={() => setSemVSel(open?-1:i)} style={{ padding:"13px 18px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", background:open?"#f0f7ff":"#fff" }}>
+                            <div><span style={{ fontWeight:700, fontSize:13 }}>Semana {i+1}</span><span style={{ fontSize:11, color:"#aaa", marginLeft:8 }}>{fmtFull(s.dias[0].dia)} → {fmtFull(s.dias[s.dias.length-1].dia)}</span></div>
+                            <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                              <span style={{ fontSize:12, color:"#579bfc", fontWeight:700 }}>{ts} vistorias</span>
+                              <span style={{ fontSize:11, color:"#aaa" }}>acum. {ai+ts}/{TOTAL_VISTORIA}</span>
+                              <span style={{ color:"#aaa" }}>{open?"▲":"▼"}</span>
+                            </div>
+                          </div>
+                          {open && (
+                            <div style={{ padding:"0 18px 14px" }}>
+                              {s.dias.map((d, j) => (
+                                <div key={j} style={{ marginBottom:10 }}>
+                                  <div style={{ fontWeight:600, fontSize:12, color:"#333", padding:"7px 0 5px", borderBottom:"1px solid #f0f0f0", marginBottom:6 }}>📅 {fmtFull(d.dia)}</div>
+                                  {d.projsDia.map((p, k) => (
+                                    <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 10px", background:k%2===0?"#f9f9f9":"#fff", borderRadius:8, marginBottom:4 }}>
+                                      <div style={{ flex:1 }}>
+                                        <div style={{ fontSize:12, color:p.tipo==="novo"?"#bbb":"#333", fontWeight:p.tipo==="pipeline"?600:400 }}>{p.nome}</div>
+                                        <div style={{ fontSize:10, color:"#bbb" }}>{p.cidade}</div>
+                                      </div>
+                                      {p.tipo === "pipeline" && <span style={{ background:"#579bfc", color:"#fff", borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700 }}>pipeline</span>}
+                                      {p.tipo === "novo" && <span style={{ background:"#e8e8e8", color:"#888", borderRadius:20, padding:"3px 10px", fontSize:10 }}>a projetar</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {vistTab === "diario" && (
+                  <div style={{ background:"#fff", borderRadius:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", overflowX:"auto" }}>
+                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                      <thead>
+                        <tr style={{ background:"#f8f9fb" }}>
+                          <th style={{ padding:"11px 14px", textAlign:"left", color:"#555", fontWeight:700, borderBottom:"2px solid #eee", whiteSpace:"nowrap" }}>Dia</th>
+                          <th style={{ padding:"11px 14px", textAlign:"left", color:"#555", fontWeight:700, borderBottom:"2px solid #eee" }}>Projetos</th>
+                          <th style={{ padding:"11px 14px", textAlign:"center", color:"#555", fontWeight:700, borderBottom:"2px solid #eee" }}>Acum.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allDiasVist.map((d, i) => {
+                          const acum = allDiasVist.slice(0, i+1).reduce((s, x) => s + x.projsDia.length, 0);
+                          return (
+                            <tr key={i} style={{ background:i%2===0?"#fff":"#fafafa" }}>
+                              <td style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0", fontWeight:600, whiteSpace:"nowrap", verticalAlign:"top" }}>{fmtFull(d.dia)}</td>
+                              <td style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0" }}>
+                                {d.projsDia.map((p, k) => (
+                                  <div key={k} style={{ marginBottom:k<d.projsDia.length-1?4:0, display:"flex", alignItems:"center", gap:6 }}>
+                                    <span style={{ color:p.tipo==="novo"?"#bbb":"#333", fontWeight:p.tipo==="pipeline"?600:400 }}>{p.nome}</span>
+                                    {p.tipo === "pipeline" && <span style={{ background:"#579bfc", color:"#fff", borderRadius:20, padding:"1px 8px", fontSize:10, fontWeight:700, flexShrink:0 }}>pipeline</span>}
+                                    {p.tipo === "novo" && <span style={{ background:"#e8e8e8", color:"#888", borderRadius:20, padding:"1px 8px", fontSize:10, flexShrink:0 }}>a projetar</span>}
+                                  </div>
+                                ))}
+                              </td>
+                              <td style={{ padding:"9px 14px", borderBottom:"1px solid #f0f0f0", textAlign:"center", verticalAlign:"top" }}>
+                                <span style={{ background:acum>=TOTAL_VISTORIA?"#00c875":"#f0f0f0", color:acum>=TOTAL_VISTORIA?"#fff":"#555", borderRadius:20, padding:"2px 10px", fontWeight:700, fontSize:11 }}>{acum}/{TOTAL_VISTORIA}</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
