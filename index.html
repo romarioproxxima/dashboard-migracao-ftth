@@ -22,7 +22,7 @@
 
     // ─── DADOS (Atualizados do Monday.com em 10/04/2026) ─────────────────────────
     const mondayProjetos = [
-      { nome:"Expansão Cluster 37 - Caldeirão Grande - BA", clusters:[37], cidade:"Caldeirão Grande", status:"Em correção", projetista:"João Victor", valor:55884.11, portas:32, clientes:27 },
+      { nome:"Expansão Cluster 37 - Caldeirão Grande - BA", clusters:[37], cidade:"Caldeirão Grande", status:"Corrigido", projetista:"João Victor", valor:38578.07, portas:32, clientes:27 },
       { nome:"Projetado Clusters 5, 32, 112 e 210 - Caldeirão Grande - BA", clusters:[5,32,112,210], cidade:"Caldeirão Grande", status:"Aguardando vistoria", projetista:"Yuri", valor:135849.33, portas:184, clientes:187 },
       { nome:"Expansão Cluster 33 e 177 - Caém - BA", clusters:[33,177], cidade:"Caém", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:153153.64, portas:128, clientes:57 },
       { nome:"Expansão Cluster 274 - Boa Vista - PB", clusters:[274], cidade:"Boa Vista", status:"Aguardando vistoria", projetista:"Jose Mauricio / Rafael", valor:123697, portas:24, clientes:8 },
@@ -52,7 +52,6 @@
       { nome:"Expansão Cluster 95 e 137 - Picuí - PB", clusters:[95,137], cidade:"Picuí", status:"Vistoria concluída", projetista:"Yuri", valor:177373.45, portas:144, clientes:38 },
       { nome:"Projetado Cluster 10 - Caém - BA", clusters:[10], cidade:"Caém", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:148402.74, portas:336, clientes:124 },
       { nome:"Projetado Cluster 21, 40 e 450 - Capim Grosso - BA", clusters:[21,40,450], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:128063.43, portas:256, clientes:113 },
-      { nome:"Expansão Cluster 62, 228, 359 - Filadélfia - BA", clusters:[62,228,359], cidade:"Filadélfia", status:"Vistoria concluída", projetista:"João Victor", valor:122256.88, portas:80, clientes:45 },
       { nome:"Expansão Cluster 371 - Filadélfia - BA", clusters:[371], cidade:"Filadélfia", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:27466.86, portas:24, clientes:7 },
       { nome:"Expansão Cluster 439 e 261 - Capim Grosso - BA", clusters:[439,261], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Rafael Paiva", valor:92194.19, portas:192, clientes:18 },
       { nome:"Expansão Cluster 128 e 348 - Capim Grosso - BA", clusters:[128,348], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Yuri", valor:82074.44, portas:72, clientes:24 },
@@ -69,6 +68,7 @@
       { nome:"Expansão Cluster 326 e 276 - Sossego - PB", clusters:[326,276], cidade:"Sossego", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:110521.62, portas:48, clientes:15 },
       { nome:"Expansão Cluster 275 - Sossego - PB", clusters:[275], cidade:"Sossego", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:109526.45, portas:48, clientes:8 },
       { nome:"Expansão Cluster 251 e 126 - Nova Palmeira - PB", clusters:[251,126], cidade:"Nova Palmeira", status:"Avaliação supervisor", projetista:"Aluisio Felix", valor:136918.60, portas:128, clientes:26 },
+      { nome:"Expansão Cluster 62, 228, 359 - Filadélfia - BA", clusters:[62,228,359], cidade:"Filadélfia", status:"Avaliação supervisor", projetista:"João Victor", valor:112275.03, portas:80, clientes:45 },
       { nome:"Projetado Clusters 8 e 369 - Caldeirão Grande - BA", clusters:[8,369], cidade:"Caldeirão Grande", status:"Avaliação coordenador", projetista:"Yuri", valor:48450.09, portas:128, clientes:132 },
       { nome:"Expansão Cluster 198 - São Vicente do Seridó - PB", clusters:[198], cidade:"São Vicente do Seridó", status:"Avaliação coordenador", projetista:"Yuri", valor:30608.42, portas:24, clientes:11 },
       { nome:"Projetado Clusters 13, 119, 329 e 394 - Cubati - PB", clusters:[13,119,329,394], cidade:"Cubati", status:"Avaliação coordenador", projetista:"Yuri", valor:307917.78, portas:264, clientes:123 },
@@ -113,7 +113,7 @@
     const totalPendente = UNIVERSO_REAL - totalEmPipeline;
     const totalEmDesenv = projetos.filter(p => p.status === "Em desenvolvimento").reduce((s, p) => s + p.qtdClusters, 0);
     const totalAProjetar = totalPendente + totalEmDesenv;
-    const totalValor = 6206391.11;
+    const totalValor = 6179103.22;
     const totalClientes = projetos.reduce((s, p) => s + p.clientesPlanilha, 0);
     const totalPortas = 7176;
     const mediaPorPorta = totalValor / totalPortas;
@@ -197,7 +197,7 @@
 
       const pct = d => (Math.ceil((d - inicio) / (1000*60*60*24)) / totalDias) * 100;
       const W = 100 / totalDias;
-      const HOJE = new Date("2026-04-10");
+      const HOJE = new Date("2026-04-13");
       const hojeVisible = HOJE >= inicio && HOJE <= fim;
       const hojeLeft = hojeVisible ? pct(HOJE) : null;
 
@@ -336,7 +336,7 @@
               <div>
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 12/04/2026</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 13/04/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
                   {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
