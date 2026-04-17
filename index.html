@@ -159,9 +159,17 @@
     const fmtFull = d => d.toLocaleDateString("pt-BR", { weekday:"short", day:"2-digit", month:"2-digit" });
 
     // ─── CRONOGRAMA PROJETOS ──────────────────────────────────────────────────────
-    const PROJETISTAS = ["Projetista 1","Projetista 2","Projetista 3"];
+    // Projetistas derivados dinamicamente do array mondayProjetos:
+    // nomes únicos, sem combinações (sem "/") nem placeholder "—".
+    const PROJETISTAS = Array.from(new Set(
+      mondayProjetos
+        .map(p => p.projetista)
+        .filter(n => n && n !== "—" && !n.includes("/"))
+    )).sort();
+    const CLUSTERS_POR_PROJETISTA_DIA = 2;
+    const CAPACIDADE_DIA = Math.max(1, PROJETISTAS.length * CLUSTERS_POR_PROJETISTA_DIA);
     const CRON_START = new Date("2026-04-13");
-    const nDiasProj = Math.ceil(totalAProjetar / 6);
+    const nDiasProj = Math.ceil(totalAProjetar / CAPACIDADE_DIA);
     const diasProj = getDiasUteis(CRON_START, nDiasProj, FERIADOS);
     const fimProj = diasProj[diasProj.length - 1];
     let cg = 1;
@@ -177,17 +185,19 @@
     const semanasProj = agruparSemanas(allDiasProj);
 
     // ─── CRONOGRAMA VISTORIA ──────────────────────────────────────────────────────
-    const TOTAL_VISTORIA = 232;
     const VIST_POR_DIA = 6;
     const VIST_START = new Date("2026-04-08");
-    const nDiasVist = Math.ceil(TOTAL_VISTORIA / VIST_POR_DIA);
-    const diasVist = getDiasUteis(VIST_START, nDiasVist, FERIADOS_VIST);
-    const fimVist = diasVist[diasVist.length - 1];
+    // Derivar listaVist ANTES de TOTAL_VISTORIA para que o total reflita os dados reais
     const jaAguardando = projetos.filter(p => p.status === "Aguardando vistoria");
     const listaVist = [
       ...jaAguardando.map(p => ({ nome:p.nome, cidade:p.cidade, tipo:"pipeline" })),
       ...Array.from({ length: totalAProjetar }, (_, k) => ({ nome:`Cluster pendente #${k+1}`, cidade:"a projetar", tipo:"novo" })),
     ];
+    // TOTAL_VISTORIA agora é derivado do comprimento real de listaVist
+    const TOTAL_VISTORIA = listaVist.length;
+    const nDiasVist = Math.ceil(TOTAL_VISTORIA / VIST_POR_DIA);
+    const diasVist = getDiasUteis(VIST_START, nDiasVist, FERIADOS_VIST);
+    const fimVist = diasVist[diasVist.length - 1];
     const allDiasVist = diasVist.map((dia, i) => ({ dia, projsDia: listaVist.slice(i * VIST_POR_DIA, i * VIST_POR_DIA + VIST_POR_DIA) }));
     const semanasVist = agruparSemanas(allDiasVist);
 
@@ -550,13 +560,13 @@
               <div>
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma de Projetos</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalAProjetar} clusters · 3 projetistas · 2/dia cada · {fmtShort(CRON_START)} → {fmtShort(fimProj)}/2026</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalAProjetar} clusters · {PROJETISTAS.length} projetistas · {CLUSTERS_POR_PROJETISTA_DIA}/dia cada · {fmtShort(CRON_START)} → {fmtShort(fimProj)}/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                   {[
                     { label:"A projetar", value:String(totalAProjetar), sub:`${totalPendente} pend. + ${totalEmDesenv} desenv.`, color:"#e2445c", icon:"⏳" },
-                    { label:"Projetistas", value:"3", sub:"2 clusters/dia cada", color:"#0073ea", icon:"👷" },
-                    { label:"Cap./dia", value:"6", sub:"clusters", color:"#a25ddc", icon:"⚡" },
+                    { label:"Projetistas", value:String(PROJETISTAS.length), sub:`${CLUSTERS_POR_PROJETISTA_DIA} clusters/dia cada`, color:"#0073ea", icon:"👷" },
+                    { label:"Cap./dia", value:String(CAPACIDADE_DIA), sub:"clusters", color:"#a25ddc", icon:"⚡" },
                     { label:"Dias úteis", value:String(nDiasProj), sub:"desc. feriados", color:"#fdab3d", icon:"📆" },
                     { label:"Início", value:"13/04", sub:"2026", color:"#579bfc", icon:"🚀" },
                     { label:"Término", value:fmtShort(fimProj), sub:"2026", color:"#00c875", icon:"🏁" },
@@ -700,7 +710,7 @@
                 </div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                   {[
-                    { label:"Total a vistoriar", value:String(TOTAL_VISTORIA), sub:"60 pipeline + 172 a projetar", color:"#e2445c", icon:"🔍" },
+                    { label:"Total a vistoriar", value:String(TOTAL_VISTORIA), sub:`${jaAguardando.length} pipeline + ${totalAProjetar} a projetar`, color:"#e2445c", icon:"🔍" },
                     { label:"Vistorias/dia", value:"6", sub:"média diária", color:"#0073ea", icon:"📋" },
                     { label:"Dias úteis", value:String(nDiasVist), sub:"desc. feriados", color:"#fdab3d", icon:"📆" },
                     { label:"Início", value:"08/04", sub:"2026", color:"#579bfc", icon:"🚀" },
