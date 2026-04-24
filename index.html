@@ -220,7 +220,7 @@
 
       const pct = d => (Math.ceil((d - inicio) / (1000*60*60*24)) / totalDias) * 100;
       const W = 100 / totalDias;
-      const HOJE = new Date("2026-04-23");
+      const HOJE = new Date("2026-04-24");
       const hojeVisible = HOJE >= inicio && HOJE <= fim;
       const hojeLeft = hojeVisible ? pct(HOJE) : null;
 
@@ -359,7 +359,7 @@
               <div>
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 23/04/2026</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 24/04/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
                   {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
