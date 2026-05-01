@@ -23,9 +23,8 @@
     // ─── DADOS (Atualizados do Monday.com em 30/04/2026) ─────────────────────────
     const mondayProjetos = [
       { nome:"Expansão Cluster 19 - Caém - BA", clusters:[19], cidade:"Caém", status:"Pausado", projetista:"João Victor", valor:69064.20, portas:80, clientes:68 },
-      { nome:"Expansão Cluster 5 - Jucati - PE", clusters:[5], cidade:"Jucati", status:"Projetado", projetista:"João Victor", valor:91851.77, portas:32, clientes:9 },
       { nome:"Expansão Clusters 246, 316, 379 - Jupi - PE", clusters:[246,316,379], cidade:"Jupi", status:"Em desenvolvimento", projetista:"João Victor", valor:0.00, portas:64, clientes:0 },
-      { nome:"Expansão Cluster 182 - Lajedo - PE", clusters:[182], cidade:"Lajedo", status:"Projetado", projetista:"Aluisio Felix", valor:12992.88, portas:24, clientes:12 },
+      { nome:"Expansão Cluster 245 - Cachoeirinha - PE", clusters:[245], cidade:"Cachoeirinha", status:"Em desenvolvimento", projetista:"Yuri", valor:0.00, portas:0, clientes:0 },
       { nome:"Projetado Clusters 5, 32, 112 e 210 - Caldeirão Grande - BA", clusters:[5,32,112,210], cidade:"Caldeirão Grande", status:"Pausado", projetista:"Yuri", valor:135849.33, portas:184, clientes:187 },
       { nome:"Expansão Cluster 292 - Senhor do Bonfim - BA", clusters:[292], cidade:"Senhor do Bonfim", status:"Pausado", projetista:"Jose Mauricio / Rafael", valor:67848.00, portas:16, clientes:8 },
       { nome:"Expansão Cluster 452 - Jacobina - BA", clusters:[452], cidade:"Jacobina", status:"Pausado", projetista:"Yuri", valor:19341.63, portas:16, clientes:6 },
@@ -38,6 +37,8 @@
       { nome:"Expansão Clusters 169 - Sossego - PB", clusters:[169], cidade:"Sossego", status:"Aguardando vistoria", projetista:"Yuri", valor:110309.00, portas:24, clientes:13 },
       { nome:"Expansão Cluster 160 - Seridó  - PB", clusters:[160], cidade:"Seridó", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:63278.52, portas:128, clientes:0 },
       { nome:"Expansão Clusters 197, 246 e 316 - Lajedo - PE", clusters:[197,246,316], cidade:"Lajedo", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:68507.09, portas:120, clientes:27 },
+      { nome:"Expansão Cluster 5 - Jucati - PE", clusters:[5], cidade:"Jucati", status:"Aguardando vistoria", projetista:"João Victor", valor:91851.77, portas:32, clientes:9 },
+      { nome:"Expansão Cluster 182 - Lajedo - PE", clusters:[182], cidade:"Lajedo", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:12992.88, portas:24, clientes:12 },
       { nome:"Projetado Clusters 9, 26, 50, 122 e 242 - Senhor do Bonfim - BA", clusters:[9,26,50,122,242], cidade:"Senhor do Bonfim", status:"Pausado", projetista:"Yuri", valor:228872.26, portas:352, clientes:226 },
       { nome:"Projetado Cluster 10 - Caém - BA", clusters:[10], cidade:"Caém", status:"Pausado", projetista:"Aluisio Felix", valor:148402.74, portas:336, clientes:124 },
       { nome:"Projetado Cluster  21,40 e 450 - Capim Grosso - BA", clusters:[21,40,450], cidade:"Capim Grosso", status:"Pausado", projetista:"Aluisio Felix", valor:128063.43, portas:256, clientes:113 },
@@ -228,7 +229,7 @@
 
       const pct = d => (Math.ceil((d - inicio) / (1000*60*60*24)) / totalDias) * 100;
       const W = 100 / totalDias;
-      const HOJE = new Date("2026-04-30");
+      const HOJE = new Date("2026-05-01");
       const hojeVisible = HOJE >= inicio && HOJE <= fim;
       const hojeLeft = hojeVisible ? pct(HOJE) : null;
 
@@ -367,7 +368,7 @@
               <div>
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 30/04/2026</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 01/05/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
                   {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
@@ -406,7 +407,7 @@
                         5:"BA",8:"BA",9:"BA",10:"BA",21:"BA",26:"BA",27:"BA",33:"BA",39:"BA",40:"BA",50:"BA",83:"BA",112:"BA",123:"BA",210:"BA",293:"BA",360:"BA",369:"BA",371:"BA",413:"BA",450:"BA",208:"BA",315:"BA",350:"BA",358:"BA",137:"BA",
                         43:"PB",20:"PB",212:"PB",25:"PB",35:"PB",23:"PB",22:"PB",136:"PB",29:"PB",59:"PB",68:"PB",46:"PB",51:"PB",93:"PB",76:"PB",56:"PB",72:"PB",107:"PB",120:"PB",127:"PB",57:"PB",34:"PB",99:"PB",250:"PB",253:"PB",251:"PB",126:"PB",274:"PB",198:"PB",95:"PB",327:"PB",85:"PB",280:"PB",391:"PB",254:"PB",330:"PB",122:"PB",45:"PB",32:"PB",38:"PB",186:"PB",184:"PB",173:"PB",221:"PB",147:"PB",277:"PB",278:"PB",281:"PB",393:"PB",96:"PB",145:"PB",326:"PB",276:"PB",275:"PB",398:"PB",199:"PB",220:"PB",282:"PB",392:"PB",399:"PB",69:"PB",97:"PB",171:"PB",324:"PB",328:"PB",320:"PB",118:"PB",125:"PB",383:"PB",384:"PB",387:"PB",273:"PB",13:"PB",119:"PB",329:"PB",394:"PB",
                         63:"PB",138:"PB",185:"PB",325:"PB",400:"PB",102:"PB",168:"PB",172:"PB",219:"PB",252:"PB",279:"PB",321:"PB",322:"PB",471:"PB",395:"PB",397:"PB",
-                        7:"PE",6:"PE",14:"PE",18:"PE",16:"PE",11:"PE",19:"PE",17:"PE",182:"PE",246:"PE",379:"PE",
+                        7:"PE",6:"PE",14:"PE",18:"PE",16:"PE",11:"PE",19:"PE",17:"PE",182:"PE",245:"PE",246:"PE",379:"PE",
                         113:"RN",131:"RN",134:"RN",132:"RN",133:"RN",
                       };
                       const pipelineUF = {};
