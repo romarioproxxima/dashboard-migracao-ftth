@@ -174,14 +174,10 @@
     // ─── CRONOGRAMA PROJETOS ──────────────────────────────────────────────────────
     // Projetistas derivados dinamicamente do array mondayProjetos:
     // nomes únicos, sem combinações (sem "/") nem placeholder "—".
-    const PROJETISTAS = Array.from(new Set(
-      mondayProjetos
-        .map(p => p.projetista)
-        .filter(n => n && n !== "—" && !n.includes("/"))
-    )).sort();
+    const PROJETISTAS = ["João Victor", "Yuri"];
     const CLUSTERS_POR_PROJETISTA_DIA = 2;
-    const CAPACIDADE_DIA = Math.max(1, PROJETISTAS.length * CLUSTERS_POR_PROJETISTA_DIA);
-    const CRON_START = new Date("2026-04-13");
+    const CAPACIDADE_DIA = PROJETISTAS.length * CLUSTERS_POR_PROJETISTA_DIA; // 2 × 2 = 4/dia
+    const CRON_START = new Date("2026-05-05");
     const nDiasProj = Math.ceil(totalAProjetar / CAPACIDADE_DIA);
     const diasProj = getDiasUteis(CRON_START, nDiasProj, FERIADOS);
     const fimProj = diasProj[diasProj.length - 1];
@@ -334,6 +330,9 @@
       const [vistTab, setVistTab] = useState("gantt");
       const [semSel, setSemSel] = useState(-1);
       const [semVSel, setSemVSel] = useState(-1);
+      const [ppTab, setPpTab] = useState("overview");
+      const [ppSearch, setPpSearch] = useState("");
+      const [ppSort, setPpSort] = useState("valor");
       const [search, setSearch] = useState("");
       const [fStatus, setFStatus] = useState("all");
 
@@ -358,7 +357,7 @@
           {/* Nav */}
           <div style={{ background:"#1f1f2e", padding:"0 20px", display:"flex", alignItems:"center", gap:4, height:52, boxShadow:"0 2px 8px rgba(0,0,0,0.2)" }}>
             <div style={{ color:"#fff", fontWeight:800, fontSize:14, marginRight:20 }}>📡 Migração Rádio</div>
-            {[["dashboard","📡 Dashboard"],["cronograma","📅 Proj. Clusters"],["vistoria","🔍 Vistoria"]].map(([m,l]) => (
+            {[["dashboard","📡 Dashboard"],["porprojeto","📋 Por Projeto"],["cronograma","📅 Proj. Clusters"],["vistoria","🔍 Vistoria"]].map(([m,l]) => (
               <button key={m} onClick={() => setModulo(m)} style={{ padding:"6px 16px", borderRadius:8, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:modulo===m?"#0073ea":"transparent", color:modulo===m?"#fff":"#aaa" }}>{l}</button>
             ))}
           </div>
@@ -567,6 +566,305 @@
                 )}
               </div>
             )}
+
+
+            {/* ══ POR PROJETO ══ */}
+            {modulo === "porprojeto" && (() => {
+              const totalProj = projetos.length;
+              const projComValor = projetos.filter(p => p.valor > 0).length;
+              const projSemValor = projetos.filter(p => p.valor === 0).length;
+              const valorMedioProj = totalValor / projComValor;
+              const portasMedioProj = totalPortas / totalProj;
+              const clientesMedioProj = totalClientes / totalProj;
+
+              // Status por projeto (não por cluster)
+              const statusProj = PIPELINE.map(s => ({
+                ...s,
+                qtd: projetos.filter(p => p.status === s.status).length,
+                valor: projetos.filter(p => p.status === s.status).reduce((a,p) => a+p.valor, 0),
+                portas: projetos.filter(p => p.status === s.status).reduce((a,p) => a+p.portas, 0),
+              })).filter(s => s.qtd > 0);
+
+              // Projetista stats by project
+              const statsProj = {};
+              projetos.forEach(p => {
+                const nomes = p.projetista === "—" ? ["Sem projetista"] : p.projetista.split(" / ");
+                nomes.forEach(n => {
+                  if (!statsProj[n]) statsProj[n] = { projetos:0, clusters:0, valor:0, portas:0, clientes:0 };
+                  statsProj[n].projetos++;
+                  statsProj[n].clusters += p.qtdClusters;
+                  statsProj[n].valor += p.valor;
+                  statsProj[n].portas += p.portas;
+                  statsProj[n].clientes += p.clientesPlanilha;
+                });
+              });
+
+              // Top projetos por valor
+              const topValor = [...projetos].sort((a,b) => b.valor - a.valor).slice(0, 10);
+
+              // Projetos sem valor
+              const semValorList = projetos.filter(p => p.valor === 0);
+
+              // Sorted/filtered table
+              const ppFiltered = [...projetos]
+                .filter(p => !ppSearch || p.nome.toLowerCase().includes(ppSearch.toLowerCase()) || p.cidade.toLowerCase().includes(ppSearch.toLowerCase()) || p.projetista.toLowerCase().includes(ppSearch.toLowerCase()))
+                .sort((a,b) => {
+                  if (ppSort === "valor") return b.valor - a.valor;
+                  if (ppSort === "clusters") return b.qtdClusters - a.qtdClusters;
+                  if (ppSort === "portas") return b.portas - a.portas;
+                  if (ppSort === "clientes") return b.clientesPlanilha - a.clientesPlanilha;
+                  if (ppSort === "nome") return a.nome.localeCompare(b.nome);
+                  return 0;
+                });
+
+              return (
+                <div>
+                  <div style={{ marginBottom:16 }}>
+                    <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão por Projeto</div>
+                    <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalProj} projetos (itens Monday) · Atualizado em 05/05/2026</div>
+                  </div>
+
+                  {/* Sub-tabs */}
+                  <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+                    {[["overview","🏠 Visão Geral"],["status","Por Status"],["projetistas","Por Projetista"],["ranking","🏆 Ranking"],["tabela","📋 Tabela"]].map(([t,l]) => (
+                      <button key={t} onClick={() => setPpTab(t)} style={{ padding:"7px 16px", borderRadius:20, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:ppTab===t?"#0073ea":"#fff", color:ppTab===t?"#fff":"#555", boxShadow:"0 1px 4px rgba(0,0,0,0.08)" }}>{l}</button>
+                    ))}
+                  </div>
+
+                  {ppTab === "overview" && (
+                    <div>
+                      {/* KPI Cards */}
+                      <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
+                        <StatCard icon="📁" label="Total Projetos" value={fmtN(totalProj)} sub={`${projComValor} com valor · ${projSemValor} sem valor`} color="#0073ea" />
+                        <StatCard icon="💰" label="Valor Total" value={fmt(totalValor)} sub="soma dos projetos" color="#ff642e" />
+                        <StatCard icon="📊" label="Valor Médio/Projeto" value={fmt(valorMedioProj)} sub="entre os com valor" color="#a25ddc" />
+                        <StatCard icon="🔌" label="Portas Médio/Proj" value={Math.round(portasMedioProj).toString()} sub="portas por projeto" color="#03c4eb" />
+                        <StatCard icon="👥" label="Clientes Médio/Proj" value={Math.round(clientesMedioProj).toString()} sub="clientes por projeto" color="#00c875" />
+                        <StatCard icon="📐" label="Clusters/Projeto" value={(projetos.reduce((s,p)=>s+p.qtdClusters,0)/totalProj).toFixed(1)} sub="média de clusters" color="#fdab3d" />
+                      </div>
+
+                      {/* Status overview */}
+                      <div style={{ display:"flex", gap:14, flexWrap:"wrap", marginBottom:14 }}>
+                        <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:2, minWidth:280 }}>
+                          <div style={{ fontWeight:700, fontSize:14, marginBottom:14 }}>Projetos por Status</div>
+                          {statusProj.map(s => (
+                            <div key={s.status} style={{ marginBottom:12 }}>
+                              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+                                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                                  <div style={{ width:10, height:10, borderRadius:3, background:s.color, flexShrink:0 }} />
+                                  <span style={{ fontSize:12, fontWeight:600, color:"#333" }}>{s.status}</span>
+                                </div>
+                                <div style={{ display:"flex", gap:16, fontSize:11 }}>
+                                  <span style={{ color:s.color, fontWeight:800 }}>{s.qtd} proj.</span>
+                                  <span style={{ color:"#aaa" }}>{s.valor>0?fmt(s.valor):"—"}</span>
+                                </div>
+                              </div>
+                              <PBar value={s.qtd} max={totalProj} color={s.color} h={8} />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
+                          <div style={{ fontWeight:700, fontSize:14, marginBottom:14 }}>Top Cidades (projetos)</div>
+                          {Object.entries(projetos.reduce((acc, p) => { const c = p.cidade||"?"; acc[c] = (acc[c]||0)+1; return acc; }, {}))
+                            .sort((a,b) => b[1]-a[1]).slice(0,8).map(([c,n],i) => (
+                            <div key={c} style={{ marginBottom:9 }}>
+                              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
+                                <span style={{ fontWeight:500, fontSize:11 }}>{c}</span>
+                                <span style={{ color:"#888", fontWeight:700 }}>{n}</span>
+                              </div>
+                              <PBar value={n} max={totalProj} color={PCOLORS[i%PCOLORS.length]} h={6} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Projetos sem valor preenchido */}
+                      {semValorList.length > 0 && (
+                        <div style={{ background:"#fffbf0", borderRadius:14, padding:16, boxShadow:"0 2px 10px rgba(0,0,0,0.05)", border:"1px solid #ffe08a", marginBottom:14 }}>
+                          <div style={{ fontWeight:700, fontSize:13, color:"#b8860b", marginBottom:10 }}>⚠️ {semValorList.length} projeto{semValorList.length>1?"s":""} sem valor preenchido</div>
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                            {semValorList.map((p,i) => (
+                              <div key={i} style={{ background:"#fff", borderRadius:8, padding:"6px 12px", fontSize:11, color:"#555", border:"1px solid #eee" }}>
+                                {p.nome.replace(/^(Expansão|Projetado|Projeto|Expansão Clusters)\s+/i,"").substring(0,40)}
+                                <span style={{ color:statusColorMap[p.status]||"#ccc", fontWeight:700, marginLeft:6 }}>● {p.status}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {ppTab === "status" && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                      {statusProj.map(s => {
+                        const items = projetos.filter(p => p.status === s.status).sort((a,b) => b.valor-a.valor);
+                        return (
+                          <div key={s.status} style={{ background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                            <div style={{ padding:"12px 18px", background:s.color, color:"#fff", fontWeight:700, fontSize:13, display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
+                              <span>{s.status}</span>
+                              <div style={{ display:"flex", gap:12, fontSize:12 }}>
+                                <span style={{ background:"rgba(255,255,255,0.2)", borderRadius:20, padding:"2px 10px" }}>{s.qtd} projetos</span>
+                                <span style={{ background:"rgba(255,255,255,0.2)", borderRadius:20, padding:"2px 10px" }}>{s.portas} portas</span>
+                                {s.valor > 0 && <span style={{ background:"rgba(255,255,255,0.2)", borderRadius:20, padding:"2px 10px" }}>{fmt(s.valor)}</span>}
+                              </div>
+                            </div>
+                            {items.map((p, j) => (
+                              <div key={j} style={{ padding:"10px 18px", borderBottom:j<items.length-1?"1px solid #f5f5f5":"none", display:"grid", gridTemplateColumns:"1fr auto", gap:12, alignItems:"center" }}>
+                                <div>
+                                  <div style={{ color:"#333", fontWeight:600, fontSize:13 }}>{p.nome}</div>
+                                  <div style={{ fontSize:11, color:"#aaa", marginTop:2, display:"flex", gap:12, flexWrap:"wrap" }}>
+                                    <span>📍 {p.cidade}</span>
+                                    <span>👷 {p.projetista}</span>
+                                    <span style={{ color:"#579bfc" }}>🔢 {p.qtdClusters} cluster{p.qtdClusters>1?"s":""}</span>
+                                    <span>🔌 {p.portas} portas</span>
+                                    <span>👥 {p.clientesPlanilha} clientes</span>
+                                  </div>
+                                </div>
+                                <div style={{ textAlign:"right" }}>
+                                  <div style={{ color:"#ff642e", fontWeight:800, fontSize:13 }}>{p.valor>0?fmt(p.valor):"—"}</div>
+                                  <div style={{ fontSize:10, color:"#bbb" }}>{p.valor>0&&p.portas>0?`${fmt(p.valor/p.portas)}/porta`:""}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {ppTab === "projetistas" && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                      {Object.entries(statsProj).sort((a,b) => b[1].valor - a[1].valor).map(([nome, d], i) => {
+                        const meus = projetos.filter(p => p.projetista === nome || p.projetista.includes(nome));
+                        return (
+                          <div key={nome} style={{ background:"#fff", borderRadius:14, padding:16, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:12, flexWrap:"wrap" }}>
+                              <div style={{ width:48, height:48, borderRadius:"50%", background:PCOLORS[i%PCOLORS.length], display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:18, flexShrink:0 }}>{nome.charAt(0)}</div>
+                              <div style={{ flex:1, minWidth:120 }}>
+                                <div style={{ fontWeight:800, fontSize:15, color:"#1f1f1f" }}>{nome}</div>
+                                <div style={{ fontSize:11, color:"#888", marginTop:2 }}>{d.projetos} projetos · {d.clusters} clusters · {d.portas} portas · {fmtN(d.clientes)} clientes</div>
+                                <PBar value={d.valor} max={totalValor} color={PCOLORS[i%PCOLORS.length]} h={6} />
+                              </div>
+                              <div style={{ textAlign:"right" }}>
+                                <div style={{ fontSize:16, fontWeight:800, color:PCOLORS[i%PCOLORS.length] }}>{fmt(d.valor)}</div>
+                                <div style={{ fontSize:11, color:"#aaa" }}>{((d.valor/totalValor)*100).toFixed(1)}% do total</div>
+                              </div>
+                            </div>
+                            {/* Status breakdown for this projetista */}
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                              {Object.entries(meus.reduce((acc, p) => { acc[p.status]=(acc[p.status]||0)+1; return acc; }, {}))
+                                .sort((a,b) => b[1]-a[1]).map(([st, n]) => (
+                                <div key={st} style={{ background:statusColorMap[st]||"#ccc", color:"#fff", borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700 }}>{st}: {n}</div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {ppTab === "ranking" && (
+                    <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
+                      <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:280 }}>
+                        <div style={{ fontWeight:700, fontSize:14, marginBottom:14 }}>🏆 Top 10 por Valor</div>
+                        {[...projetos].sort((a,b) => b.valor-a.valor).slice(0,10).map((p, i) => (
+                          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12, padding:"8px 10px", background:i<3?"#f8f5ff":"#fafafa", borderRadius:10, border:i<3?"1px solid #e8d8ff":"none" }}>
+                            <div style={{ width:24, height:24, borderRadius:"50%", background:i===0?"#f5c518":i===1?"#c0c0c0":i===2?"#cd7f32":"#e0e0e0", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:11, flexShrink:0 }}>{i+1}</div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ fontSize:12, fontWeight:600, color:"#333", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.nome}</div>
+                              <div style={{ fontSize:10, color:"#aaa" }}>{p.cidade} · {p.projetista} · {p.portas} portas</div>
+                            </div>
+                            <div style={{ textAlign:"right", flexShrink:0 }}>
+                              <div style={{ fontWeight:800, color:"#ff642e", fontSize:13 }}>{fmt(p.valor)}</div>
+                              <div style={{ fontSize:10, color:statusColorMap[p.status]||"#ccc", fontWeight:700 }}>{p.status}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:260 }}>
+                        <div style={{ fontWeight:700, fontSize:14, marginBottom:14 }}>🔌 Top 10 por Portas</div>
+                        {[...projetos].sort((a,b) => b.portas-a.portas).slice(0,10).map((p, i) => (
+                          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                            <div style={{ width:22, textAlign:"right", fontSize:11, fontWeight:800, color:"#aaa", flexShrink:0 }}>{i+1}</div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ fontSize:12, fontWeight:600, color:"#333", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.nome}</div>
+                              <div style={{ fontSize:10, color:"#aaa" }}>{p.cidade}</div>
+                            </div>
+                            <div style={{ fontWeight:800, color:"#03c4eb", fontSize:13, flexShrink:0 }}>{p.portas}</div>
+                          </div>
+                        ))}
+                        <div style={{ fontWeight:700, fontSize:14, marginBottom:14, marginTop:20, borderTop:"1px solid #f0f0f0", paddingTop:16 }}>👥 Top 10 por Clientes</div>
+                        {[...projetos].sort((a,b) => b.clientesPlanilha-a.clientesPlanilha).slice(0,10).map((p, i) => (
+                          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+                            <div style={{ width:22, textAlign:"right", fontSize:11, fontWeight:800, color:"#aaa", flexShrink:0 }}>{i+1}</div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ fontSize:12, fontWeight:600, color:"#333", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.nome}</div>
+                              <div style={{ fontSize:10, color:"#aaa" }}>{p.projetista}</div>
+                            </div>
+                            <div style={{ fontWeight:800, color:"#00c875", fontSize:13, flexShrink:0 }}>{fmtN(p.clientesPlanilha)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {ppTab === "tabela" && (
+                    <div>
+                      <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
+                        <input placeholder="🔍 Buscar projeto..." value={ppSearch} onChange={e => setPpSearch(e.target.value)} style={{ padding:"9px 16px", borderRadius:20, border:"1px solid #e0e0e0", fontSize:12, flex:1, minWidth:200, outline:"none" }} />
+                        <select value={ppSort} onChange={e => setPpSort(e.target.value)} style={{ padding:"9px 14px", borderRadius:20, border:"1px solid #e0e0e0", fontSize:12, background:"#fff", cursor:"pointer" }}>
+                          <option value="valor">Ordenar: Valor</option>
+                          <option value="clusters">Ordenar: Clusters</option>
+                          <option value="portas">Ordenar: Portas</option>
+                          <option value="clientes">Ordenar: Clientes</option>
+                          <option value="nome">Ordenar: Nome</option>
+                        </select>
+                        <span style={{ fontSize:11, color:"#aaa" }}>{ppFiltered.length} projetos</span>
+                      </div>
+                      <div style={{ background:"#fff", borderRadius:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", overflowX:"auto" }}>
+                        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                          <thead>
+                            <tr style={{ background:"#f8f9fb" }}>
+                              {["#","Projeto","Cidade","Projetista","Status","Clusters","Portas","Clientes","Valor","R$/porta"].map(h => (
+                                <th key={h} style={{ padding:"11px 12px", textAlign:["Clusters","Portas","Clientes"].includes(h)?"center":"left", color:"#555", fontWeight:700, borderBottom:"2px solid #eee", whiteSpace:"nowrap", fontSize:11 }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ppFiltered.map((p, i) => (
+                              <tr key={i} style={{ background:i%2===0?"#fff":"#fafafa" }}>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", color:"#bbb", fontSize:11 }}>{i+1}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", fontWeight:500, color:"#333", maxWidth:200 }}>{p.nome}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", color:"#666", whiteSpace:"nowrap" }}>{p.cidade}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", color:"#666", whiteSpace:"nowrap" }}>{p.projetista||"—"}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0" }}><span style={{ background:statusColorMap[p.status]||"#ccc", color:"#fff", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, whiteSpace:"nowrap" }}>{p.status}</span></td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", textAlign:"center", fontWeight:700, color:"#0073ea" }}>{p.qtdClusters}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", textAlign:"center", fontWeight:700, color:"#03c4eb" }}>{p.portas}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", textAlign:"center", color:"#555" }}>{p.clientesPlanilha||"—"}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", textAlign:"right", fontWeight:700, color:"#ff642e", whiteSpace:"nowrap" }}>{p.valor>0?fmt(p.valor):"—"}</td>
+                                <td style={{ padding:"9px 12px", borderBottom:"1px solid #f0f0f0", textAlign:"right", color:"#888", whiteSpace:"nowrap", fontSize:11 }}>{p.valor>0&&p.portas>0?fmt(p.valor/p.portas):"—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{ background:"#f0f7ff", fontWeight:800 }}>
+                              <td colSpan={5} style={{ padding:"10px 12px", borderTop:"2px solid #e0e0e0", color:"#333", fontSize:12 }}>TOTAL ({ppFiltered.length} projetos)</td>
+                              <td style={{ padding:"10px 12px", borderTop:"2px solid #e0e0e0", textAlign:"center", color:"#0073ea" }}>{ppFiltered.reduce((s,p)=>s+p.qtdClusters,0)}</td>
+                              <td style={{ padding:"10px 12px", borderTop:"2px solid #e0e0e0", textAlign:"center", color:"#03c4eb" }}>{ppFiltered.reduce((s,p)=>s+p.portas,0)}</td>
+                              <td style={{ padding:"10px 12px", borderTop:"2px solid #e0e0e0", textAlign:"center", color:"#555" }}>{fmtN(ppFiltered.reduce((s,p)=>s+p.clientesPlanilha,0))}</td>
+                              <td style={{ padding:"10px 12px", borderTop:"2px solid #e0e0e0", textAlign:"right", color:"#ff642e" }}>{fmt(ppFiltered.reduce((s,p)=>s+p.valor,0))}</td>
+                              <td style={{ padding:"10px 12px", borderTop:"2px solid #e0e0e0" }}></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* ══ CRONOGRAMA PROJETOS ══ */}
             {modulo === "cronograma" && (
