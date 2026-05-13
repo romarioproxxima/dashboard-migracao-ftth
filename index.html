@@ -26,37 +26,38 @@
     // ─── DADOS (Atualizados do Monday.com em 30/04/2026) ─────────────────────────
     const mondayProjetos = [
       { nome:"Expansão Cluster 245 - Cachoeirinha - PE", clusters:[245], cidade:"Cachoeirinha", status:"Em desenvolvimento", projetista:"Yuri", valor:0.00, portas:0, clientes:0 },
-      { nome:"Projetado Clusters 5, 32, 112 e 210 - Caldeirão Grande - BA", clusters:[5,32,112,210], cidade:"Caldeirão Grande", status:"Pausado", projetista:"Yuri", valor:135849.33, portas:184, clientes:187 },
-      { nome:"Expansão Cluster 292 - Senhor do Bonfim - BA", clusters:[292], cidade:"Senhor do Bonfim", status:"Pausado", projetista:"Jose Mauricio / Rafael", valor:67848.00, portas:16, clientes:8 },
-      { nome:"Expansão Cluster 452 - Jacobina - BA", clusters:[452], cidade:"Jacobina", status:"Pausado", projetista:"Yuri", valor:19341.63, portas:16, clientes:6 },
-      { nome:"Expansão Cluster 49 - Cansanção - BA", clusters:[49], cidade:"Cansanção", status:"Pausado", projetista:"Yuri", valor:97278.73, portas:80, clientes:33 },
-      { nome:"Expansão Cluster 214 e 235 - Queimadas - BA", clusters:[214,235], cidade:"Queimadas", status:"Pausado", projetista:"Yuri", valor:104222.14, portas:56, clientes:21 },
-      { nome:"Expansão Cluster 37 - Caldeirão Grande - BA", clusters:[37], cidade:"Caldeirão Grande", status:"Pausado", projetista:"João Victor", valor:38578.07, portas:32, clientes:27 },
-      { nome:"Expansão Cluster 19 - Caém - BA", clusters:[19], cidade:"Caém", status:"Pausado", projetista:"João Victor", valor:69064.20, portas:80, clientes:68 },
+      { nome:"Expansão Cluster 247 - Lajedo - PE", clusters:[247], cidade:"Lajedo", status:"Em desenvolvimento", projetista:"João Victor", valor:0.00, portas:0, clientes:9 },
+      { nome:"Projetado Clusters 5, 32, 112 e 210 - Caldeirão Grande - BA", clusters:[5,32,112,210], cidade:"Caldeirão Grande", status:"Aguardando vistoria", projetista:"Yuri", valor:135849.33, portas:184, clientes:187 },
+      { nome:"Expansão Cluster 292 - Senhor do Bonfim - BA", clusters:[292], cidade:"Senhor do Bonfim", status:"Aguardando vistoria", projetista:"Aluisio Felix / Yuri", valor:67848.00, portas:16, clientes:8 },
+      { nome:"Expansão Cluster 452 - Jacobina - BA", clusters:[452], cidade:"Jacobina", status:"Aguardando vistoria", projetista:"Yuri", valor:19341.63, portas:16, clientes:6 },
+      { nome:"Expansão Cluster 49 - Cansanção - BA", clusters:[49], cidade:"Cansanção", status:"Aguardando vistoria", projetista:"Yuri", valor:97278.73, portas:80, clientes:33 },
+      { nome:"Expansão Cluster 214 e 235 - Queimadas - BA", clusters:[214,235], cidade:"Queimadas", status:"Aguardando vistoria", projetista:"Yuri", valor:104222.14, portas:56, clientes:21 },
+      { nome:"Expansão Cluster 37 - Caldeirão Grande - BA", clusters:[37], cidade:"Caldeirão Grande", status:"Aguardando vistoria", projetista:"João Victor", valor:38578.07, portas:32, clientes:27 },
+      { nome:"Expansão Cluster 19 - Caém - BA", clusters:[19], cidade:"Caém", status:"Aguardando vistoria", projetista:"João Victor", valor:69064.20, portas:80, clientes:68 },
       { nome:"Expansão Cluster 252 - São João do Rio do Peixe - PB", clusters:[252], cidade:"São João do Rio do Peixe", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:96388.01, portas:64, clientes:9 },
       { nome:"Expansão Cluster 395 - Picuí - PB", clusters:[395], cidade:"Picuí", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:36300.54, portas:32, clientes:6 },
       { nome:"Expansão Cluster 397 - Picuí - PB", clusters:[397], cidade:"Picuí", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:84125.35, portas:8, clientes:6 },
-      { nome:"Expansão Clusters 169 - Sossego - PB", clusters:[169], cidade:"Sossego", status:"Aguardando vistoria", projetista:"Yuri", valor:110309.00, portas:24, clientes:13 },
-      { nome:"Expansão Cluster 160 - Seridó  - PB", clusters:[160], cidade:"Seridó", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:63278.52, portas:128, clientes:0 },
-      { nome:"Expansão Clusters 197, 246 e 316 - Lajedo - PE", clusters:[197,246,316], cidade:"Lajedo", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:68507.09, portas:120, clientes:27 },
-      { nome:"Expansão Cluster 5 - Jucati - PE", clusters:[5], cidade:"Jucati", status:"Aguardando vistoria", projetista:"João Victor", valor:91851.77, portas:32, clientes:9 },
-      { nome:"Expansão Cluster 182 - Lajedo - PE", clusters:[182], cidade:"Lajedo", status:"Aguardando vistoria", projetista:"Aluisio Felix", valor:12992.88, portas:24, clientes:12 },
-      { nome:"Projetado Clusters 9, 26, 50, 122 e 242 - Senhor do Bonfim - BA", clusters:[9,26,50,122,242], cidade:"Senhor do Bonfim", status:"Pausado", projetista:"Yuri", valor:228872.26, portas:352, clientes:226 },
-      { nome:"Projetado Cluster 10 - Caém - BA", clusters:[10], cidade:"Caém", status:"Pausado", projetista:"Aluisio Felix", valor:148402.74, portas:336, clientes:124 },
-      { nome:"Projetado Cluster  21,40 e 450 - Capim Grosso - BA", clusters:[21,40,450], cidade:"Capim Grosso", status:"Pausado", projetista:"Aluisio Felix", valor:128063.43, portas:256, clientes:113 },
-      { nome:"Expansão Cluster 371 - Filadélfia - BA", clusters:[371], cidade:"Filadélfia", status:"Pausado", projetista:"Aluisio Felix", valor:27466.86, portas:24, clientes:7 },
-      { nome:"Expansão - Cluster 439 e 261 - Capim Grosso - BA", clusters:[439,261], cidade:"Capim Grosso", status:"Pausado", projetista:"Aluisio Felix / Yuri", valor:92194.19, portas:192, clientes:18 },
-      { nome:"Expansão Cluster 128 e 348 - Capim Grosso - BA", clusters:[128,348], cidade:"Capim Grosso", status:"Pausado", projetista:"Yuri", valor:82074.44, portas:72, clientes:24 },
-      { nome:"Expansão Cluster 413,293 e 17 - São José do Jacuípe - BA", clusters:[413,293,17], cidade:"São José do Jacuípe", status:"Pausado", projetista:"—", valor:111126.25, portas:224, clientes:94 },
-      { nome:"Expansão Cluster 262 - Saúde - BA", clusters:[262], cidade:"Saúde", status:"Pausado", projetista:"Aluisio Felix", valor:19651.70, portas:80, clientes:9 },
-      { nome:"Expansão Cluster 103 - Saúde - BA", clusters:[103], cidade:"Saúde", status:"Pausado", projetista:"Aluisio Felix", valor:71142.14, portas:48, clientes:20 },
-      { nome:"Expansão Cluster 271 - Itiúba - BA", clusters:[271], cidade:"Itiúba", status:"Pausado", projetista:"Aluisio Felix / Yuri", valor:55605.00, portas:64, clientes:9 },
-      { nome:"Expansão Cluster 447 - Itiúba - BA", clusters:[447], cidade:"Itiúba", status:"Pausado", projetista:"Aluisio Felix / Yuri", valor:62942.00, portas:24, clientes:6 },
-      { nome:"Expansão Cluster 415 - Queimadas - BA", clusters:[415], cidade:"Queimadas", status:"Pausado", projetista:"Aluisio Felix / Yuri", valor:48135.00, portas:32, clientes:6 },
-      { nome:"Expansão Cluster 33 e 177 - Caém - BA", clusters:[33,177], cidade:"Caém", status:"Pausado", projetista:"Aluisio Felix", valor:153153.64, portas:128, clientes:57 },
-      { nome:"Expansão Cluster 78, 88, 94, 111, 114, 208 e 427 - Antônio Gonçalves - BA", clusters:[78,88,94,111,114,208,427], cidade:"Antônio Gonçalves", status:"Pausado", projetista:"Yuri", valor:223949.10, portas:216, clientes:124 },
-      { nome:"Expansão Cluster 29,27,360,157,167,315,377 e 233  Ponto Novo - BA", clusters:[29,27,360,157,167,315,377,233], cidade:"Expansão Cluster 29,27,360,157,167,315,377 e 233  Ponto Novo - BA", status:"Pausado", projetista:"Aluisio Felix", valor:169291.82, portas:408, clientes:146 },
+      { nome:"Projetado Clusters 9, 26, 50, 122 e 242 - Senhor do Bonfim - BA", clusters:[9,26,50,122,242], cidade:"Senhor do Bonfim", status:"Vistoria concluída", projetista:"Yuri", valor:228872.26, portas:352, clientes:226 },
+      { nome:"Projetado Cluster 10 - Caém - BA", clusters:[10], cidade:"Caém", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:148402.74, portas:336, clientes:124 },
+      { nome:"Projetado Cluster  21,40 e 450 - Capim Grosso - BA", clusters:[21,40,450], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:128063.43, portas:256, clientes:113 },
+      { nome:"Expansão Cluster 371 - Filadélfia - BA", clusters:[371], cidade:"Filadélfia", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:27466.86, portas:24, clientes:7 },
+      { nome:"Expansão - Cluster 439 e 261 - Capim Grosso - BA", clusters:[439,261], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Aluisio Felix / Yuri", valor:92194.19, portas:192, clientes:18 },
+      { nome:"Expansão Cluster 128 e 348 - Capim Grosso - BA", clusters:[128,348], cidade:"Capim Grosso", status:"Vistoria concluída", projetista:"Yuri", valor:82074.44, portas:72, clientes:24 },
+      { nome:"Expansão Cluster 413,293 e 17 - São José do Jacuípe - BA", clusters:[413,293,17], cidade:"São José do Jacuípe", status:"Vistoria concluída", projetista:"Aluisio Felix / Yuri", valor:111126.25, portas:224, clientes:94 },
+      { nome:"Expansão Cluster 262 - Saúde - BA", clusters:[262], cidade:"Saúde", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:19651.70, portas:80, clientes:9 },
+      { nome:"Expansão Cluster 103 - Saúde - BA", clusters:[103], cidade:"Saúde", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:71142.14, portas:48, clientes:20 },
+      { nome:"Expansão Cluster 271 - Itiúba - BA", clusters:[271], cidade:"Itiúba", status:"Vistoria concluída", projetista:"Aluisio Felix / Yuri", valor:55605.00, portas:64, clientes:9 },
+      { nome:"Expansão Cluster 447 - Itiúba - BA", clusters:[447], cidade:"Itiúba", status:"Vistoria concluída", projetista:"Aluisio Felix / Yuri", valor:62942.00, portas:24, clientes:6 },
+      { nome:"Expansão Cluster 415 - Queimadas - BA", clusters:[415], cidade:"Queimadas", status:"Vistoria concluída", projetista:"Aluisio Felix / Yuri", valor:48135.00, portas:32, clientes:6 },
+      { nome:"Expansão Cluster 33 e 177 - Caém - BA", clusters:[33,177], cidade:"Caém", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:153153.64, portas:128, clientes:57 },
+      { nome:"Expansão Cluster 78, 88, 94, 111, 114, 208 e 427 - Antônio Gonçalves - BA", clusters:[78,88,94,111,114,208,427], cidade:"Antônio Gonçalves", status:"Vistoria concluída", projetista:"Yuri", valor:223949.10, portas:216, clientes:124 },
+      { nome:"Expansão Cluster 29,27,360,157,167,315,377 e 233  Ponto Novo - BA", clusters:[29,27,360,157,167,315,377,233], cidade:"Expansão Cluster 29,27,360,157", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:169291.82, portas:408, clientes:146 },
       { nome:"Expansão Cluster 172 - Sossêgo - PB", clusters:[172], cidade:"Sossêgo", status:"Vistoria concluída", projetista:"João Victor", valor:91012.34, portas:16, clientes:13 },
+      { nome:"Expansão Clusters 197, 246 e 316 - Lajedo - PE", clusters:[197,246,316], cidade:"Lajedo", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:68507.09, portas:120, clientes:27 },
+      { nome:"Expansão Cluster 5 - Jucati - PE", clusters:[5], cidade:"Jucati", status:"Vistoria concluída", projetista:"João Victor", valor:91851.77, portas:32, clientes:9 },
+      { nome:"Expansão Cluster 160 - Seridó  - PB", clusters:[160], cidade:"Seridó", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:63278.52, portas:128, clientes:0 },
+      { nome:"Expansão Cluster 182 - Lajedo - PE", clusters:[182], cidade:"Lajedo", status:"Vistoria concluída", projetista:"Aluisio Felix", valor:12992.88, portas:24, clientes:12 },
+      { nome:"Expansão Clusters 169 - Sossego - PB", clusters:[169], cidade:"Sossego", status:"Vistoria concluída", projetista:"Yuri", valor:110309.00, portas:24, clientes:13 },
       { nome:"Expansão Clusters 83, 123 e 207 - Pindobaçu - BA", clusters:[83,123,207], cidade:"Pindobaçu", status:"Em Revisão", projetista:"Yuri", valor:150041.17, portas:104, clientes:53 },
       { nome:"Projeto Cluster - 201 e 257  - Filadélfia - BA", clusters:[201,257], cidade:"Filadélfia", status:"Em Revisão", projetista:"Aluisio Felix / Yuri", valor:49817.65, portas:96, clientes:228 },
       { nome:"Expansão Cluster 361 -  Quixabeira - BA", clusters:[361], cidade:"Quixabeira", status:"Em Revisão", projetista:"Yuri", valor:24905.70, portas:32, clientes:7 },
@@ -64,49 +65,52 @@
       { nome:"Expansão Cluster 269 - Jacobina - BA", clusters:[269], cidade:"Jacobina", status:"Em Revisão", projetista:"Yuri", valor:3511.82, portas:16, clientes:9 },
       { nome:"Expansão Cluster - 62, 228, 359 - Filadélfia - BA", clusters:[62,228,359], cidade:"Filadélfia", status:"Em Revisão", projetista:"João Victor", valor:112275.03, portas:80, clientes:45 },
       { nome:"Expansão Cluster 108 e 465 - Itiúba - BA", clusters:[108,465], cidade:"Itiúba", status:"Em Revisão", projetista:"Yuri", valor:60136.91, portas:112, clientes:25 },
-      { nome:"Expansão Cluster 186 - Triunfo - PB", clusters:[186], cidade:"Triunfo", status:"Em Ajuste", projetista:"João Victor", valor:8482.09, portas:16, clientes:12 },
+      { nome:"Expansão Cluster 186 - Triunfo - PB", clusters:[186], cidade:"Triunfo", status:"Em Ajuste", projetista:"João Victor", valor:24858.32, portas:40, clientes:12 },
       { nome:"Expansão Cluster 85, 199, 220, 282, 391, 392 e 399 - Sossêgo - PB", clusters:[85,199,220,282,391,392,399], cidade:"Sossêgo", status:"Em Ajuste", projetista:"João Victor / Yuri", valor:273816.06, portas:368, clientes:70 },
       { nome:"Expansão Cluster 170, 185 e 400 - Pedra Lavrada - PB", clusters:[170,185,400], cidade:"Pedra Lavrada", status:"Em Revisão", projetista:"Yuri", valor:109974.75, portas:64, clientes:31 },
       { nome:"Expansão Cluster 398  - Cubati - PB", clusters:[398], cidade:"Cubati", status:"Em Revisão", projetista:"Yuri", valor:6287.91, portas:32, clientes:6 },
       { nome:"Expansão Cluster 321 e 322 - Picuí - PB", clusters:[321,322], cidade:"Picuí", status:"Em Revisão", projetista:"Yuri", valor:40596.56, portas:40, clientes:14 },
       { nome:"Expansão Cluster 168 - Cubati -PB", clusters:[168], cidade:"Cubati", status:"Em Revisão", projetista:"Aluisio Felix", valor:69157.68, portas:40, clientes:13 },
+      { nome:"Expansão Cluster 250 - Picuí -  PB", clusters:[250], cidade:"Picuí", status:"Em Revisão", projetista:"Aluisio Felix / Yuri", valor:13238.00, portas:48, clientes:9 },
+      { nome:"Expansão Cluster - 102 e 219 - Tenório - PB", clusters:[102,219], cidade:"Tenório", status:"Em Revisão", projetista:"Jheydson / Aluisio Felix", valor:112263.08, portas:184, clientes:49 },
       { nome:"Projetado Clusters 8 e 369 - Caldeirão Grande - BA", clusters:[8,369], cidade:"Caldeirão Grande", status:"Em Revisão", projetista:"Yuri", valor:48450.09, portas:128, clientes:132 },
       { nome:"Projetado Cluster 18 - Capim Grosso -BA", clusters:[18], cidade:"Capim Grosso", status:"Em Revisão", projetista:"Aluisio Felix", valor:150146.69, portas:160, clientes:76 },
       { nome:"Expansão Clusters 254 e 330 + Projeto Existente - Bernardino Batista - PB", clusters:[254,330], cidade:"Bernardino Batista", status:"Em Revisão", projetista:"João Victor / Yuri", valor:81220.01, portas:128, clientes:16 },
       { nome:"Expansão Cluster 96, 93 e 107 - Pedra Lavrada - PB", clusters:[96,93,107], cidade:"Pedra Lavrada", status:"Em Revisão", projetista:"Aluisio Felix", valor:132700.45, portas:128, clientes:62 },
       { nome:"Expansão Cluster 253 - São João do Rio do Peixe - PB", clusters:[253], cidade:"São João do Rio do Peixe", status:"Em Revisão", projetista:"Yuri", valor:52324.88, portas:40, clientes:9 },
       { nome:"Expansão Cluster 251 e 126 - Nova Palmeira - PB", clusters:[251,126], cidade:"Nova Palmeira", status:"Em Revisão", projetista:"Aluisio Felix", valor:132357.96, portas:120, clientes:27 },
-      { nome:"Expansão Cluster 138 e 325 - São Vicente do Seridó - PB", clusters:[138,325], cidade:"São Vicente do Seridó", status:"Em Revisão", projetista:"Yuri", valor:95653.90, portas:200, clientes:23 },
-      { nome:"Expansão Cluster 95 e 137 - Picuí - PB", clusters:[95,137], cidade:"Picuí", status:"Em correção", projetista:"Yuri", valor:168472.48, portas:144, clientes:38 },
-      { nome:"Expansão Cluster 279 - Picuí - PB", clusters:[279], cidade:"Picuí", status:"Em Revisão", projetista:"Yuri", valor:16322.32, portas:16, clientes:8 },
-      { nome:"Expansão Cluster 184 - Picuí - PB", clusters:[184], cidade:"Picuí", status:"Em correção", projetista:"Yuri", valor:24788.95, portas:24, clientes:12 },
+      { nome:"Expansão Cluster 138 e 325 - São Vicente do Seridó - PB", clusters:[138,325], cidade:"São Vicente do Seridó", status:"Em Revisão", projetista:"Yuri", valor:97996.52, portas:128, clientes:31 },
+      { nome:"Expansão Cluster 95 e 137 - Picuí - PB", clusters:[95,137], cidade:"Picuí", status:"Em Revisão", projetista:"Yuri", valor:70074.52, portas:40, clientes:18 },
+      { nome:"Expansão Cluster 279 - Picuí - PB", clusters:[279], cidade:"Picuí", status:"Em Revisão", projetista:"Yuri", valor:14579.03, portas:16, clientes:9 },
+      { nome:"Expansão Cluster 184 - Picuí - PB", clusters:[184], cidade:"Picuí", status:"Em Revisão", projetista:"Yuri", valor:3082.46, portas:8, clientes:6 },
       { nome:"Expansão Cluster 63 - Frei Martins - PB", clusters:[63], cidade:"Frei Martins", status:"Em Revisão", projetista:"Aluisio Felix", valor:147967.99, portas:48, clientes:26 },
-      { nome:"Expansão Cluster 471 - Sossego - PB", clusters:[471], cidade:"Sossego", status:"Em Revisão", projetista:"Yuri", valor:35196.00, portas:16, clientes:5 },
       { nome:"Expansão Cluster 274 - Boa Vista - PB", clusters:[274], cidade:"Boa Vista", status:"Em Revisão", projetista:"Aluisio Felix", valor:112611.87, portas:40, clientes:8 },
-      { nome:"Expansão Cluster 39 - Ponto Novo - BA", clusters:[39], cidade:"Ponto Novo", status:"Em Revisão", projetista:"Aluisio Felix", valor:49269.50, portas:80, clientes:40 },
-      { nome:"Expansão Cluster 145 - Tenório - PB", clusters:[145], cidade:"Tenório", status:"Em Revisão", projetista:"Aluisio Felix / Yuri", valor:14844.71, portas:40, clientes:15 },
-      { nome:"Expansão Cluster 250 - Picuí -  PB", clusters:[250], cidade:"Picuí", status:"Em Revisão", projetista:"Aluisio Felix / Yuri", valor:13238.00, portas:48, clientes:9 },
-      { nome:"Expansão Cluster 147,277,278,281 e 393  Pedra Lavrada - PB", clusters:[147,277,278,281,393], cidade:"Expansão Cluster 147,277,278,281 e 393  Pedra Lavrada - PB", status:"Em Revisão", projetista:"Aluisio Felix", valor:152303.00, portas:96, clientes:45 },
-      { nome:"Expansão Cluster 327 - Picuí - PB", clusters:[327], cidade:"Picuí", status:"Em Revisão", projetista:"Yuri", valor:8300.74, portas:16, clientes:7 },
-      { nome:"Expansão Cluster 396 - Serido - PB", clusters:[396], cidade:"Serido", status:"Em Revisão", projetista:"João Victor", valor:20358.00, portas:16, clientes:6 },
-      { nome:"Expansão Cluster 198 - São Vicente do Seridó - PB", clusters:[198], cidade:"São Vicente do Seridó", status:"Em Revisão", projetista:"Yuri", valor:30327.00, portas:24, clientes:11 },
-      { nome:"Projetado Clusters 13, 119, 329 e 394 - Cubati - PB", clusters:[13,119,329,394], cidade:"Cubati", status:"Em Revisão", projetista:"Yuri", valor:307917.78, portas:264, clientes:123 },
-      { nome:"Expansão Cluster 221 - Baraúna - PB", clusters:[221], cidade:"Baraúna", status:"Em Revisão", projetista:"Aluisio Felix", valor:70250.21, portas:80, clientes:10 },
-      { nome:"Expansão Cluster 34 e 280 - Sossêgo - PB", clusters:[34,280], cidade:"Sossêgo", status:"Em Revisão", projetista:"Yuri", valor:63941.00, portas:168, clientes:51 },
-      { nome:"Expansão Cluster - 102 e 219 - Tenório - PB", clusters:[102,219], cidade:"Tenório", status:"Em Revisão", projetista:"Aluisio Felix", valor:102437.03, portas:160, clientes:30 },
-      { nome:"Expansão Cluster 275 - Sossego - PB", clusters:[275], cidade:"Sossego", status:"Em Revisão", projetista:"Aluisio Felix", valor:118109.00, portas:80, clientes:1 },
-      { nome:"Expansão Cluster 326, 471 e 276 - Sossego - PB", clusters:[326,471,276], cidade:"Sossego", status:"Em Revisão", projetista:"Aluisio Felix", valor:83254.66, portas:56, clientes:28 },
-      { nome:"Projeto - Cluster 143 - Capim Grosso - BA", clusters:[143], cidade:"Capim Grosso", status:"Em Revisão", projetista:"—", valor:87366.00, portas:184, clientes:141 },
-      { nome:"Projeto Cluster - 155, 326 e 358 -  Jacobina - BA", clusters:[155,326,358], cidade:"Jacobina", status:"Em Revisão", projetista:"Jheydson", valor:159756.00, portas:256, clientes:153 },
-      { nome:"Projeto Cluster 137 - Capim Grosso - BA", clusters:[137], cidade:"Capim Grosso", status:"Em Revisão", projetista:"Brendo / Yuri", valor:27344.00, portas:72, clientes:137 },
-      { nome:"Expansão Cluster 273 - Torre Brenan - Junco do Seridó - PB", clusters:[273], cidade:"Junco do Seridó", status:"Em Revisão", projetista:"Rafael Paiva", valor:226361.00, portas:176, clientes:31 },
-      { nome:"Expansão Clusters 69, 97, 171, 324 e 328 - Cubati - PB", clusters:[69,97,171,324,328], cidade:"Cubati", status:"Em Revisão", projetista:"Yuri", valor:227702.00, portas:208, clientes:74 },
-      { nome:"Expansão Cluster 320 - São Vicente do Seridó - PB", clusters:[320], cidade:"São Vicente do Seridó", status:"Em Revisão", projetista:"Yuri", valor:29957.00, portas:24, clientes:7 },
-      { nome:"2ª Opção - Expansão Cluster 273 - Torre Brenan - Junco do Seridó - PB", clusters:[273], cidade:"Junco do Seridó", status:"Em Revisão", projetista:"Rafael Paiva", valor:226712.00, portas:176, clientes:31 },
-      { nome:"Expansão Cluster 387  - Juazeirinho - PB", clusters:[387], cidade:"Juazeirinho", status:"Em Revisão", projetista:"Yuri", valor:4650.00, portas:16, clientes:6 },
-      { nome:"Expansão Cluster 118, 125, 383 e 384 - São Vicente do Seridó - PB", clusters:[118,125,383,384], cidade:"São Vicente do Seridó", status:"Em Revisão", projetista:"Yuri", valor:113007.12, portas:184, clientes:45 },
-      { nome:"Expansão Cluster 173 - Triunfo - PB", clusters:[173], cidade:"Triunfo", status:"Em Revisão", projetista:"João Victor", valor:10216.00, portas:24, clientes:13 },
-      { nome:"Expansão Cluster 201 - São João do Rio do Peixe - PB", clusters:[201], cidade:"São João do Rio do Peixe", status:"Em Revisão", projetista:"Yuri", valor:75631.06, portas:72, clientes:11 },
+      { nome:"Expansão Cluster 145 - Tenório - PB", clusters:[145], cidade:"Tenório", status:"Em Revisão", projetista:"Aluisio Felix / Yuri", valor:8002.88, portas:24, clientes:17 },
+      { nome:"Expansão Cluster 147,277,278,281 e 393  Pedra Lavrada - PB", clusters:[147,277,278,281,393], cidade:"Expansão Cluster 147,277,278,2", status:"Em Revisão", projetista:"Aluisio Felix", valor:152303.00, portas:96, clientes:45 },
+      { nome:"Expansão Cluster 396 - Serido - PB", clusters:[396], cidade:"Serido", status:"Em Revisão", projetista:"João Victor", valor:22954.31, portas:16, clientes:4 },
+      { nome:"Projetado Clusters 13, 119, 329 e 394 - Cubati - PB", clusters:[13,119,329,394], cidade:"Cubati", status:"Em Revisão", projetista:"Yuri", valor:193392.07, portas:120, clientes:93 },
+      { nome:"Expansão Cluster 221 - Baraúna - PB", clusters:[221], cidade:"Baraúna", status:"Avaliação gerência", projetista:"Jheydson / Aluisio Felix", valor:73421.45, portas:96, clientes:6 },
+      { nome:"Expansão Cluster 34 e 280 - Sossêgo - PB", clusters:[34,280], cidade:"Sossêgo", status:"Em Revisão", projetista:"Yuri / Jheydson", valor:65163.04, portas:160, clientes:44 },
+      { nome:"Expansão Cluster 326, 471 e 276 - Sossego - PB", clusters:[326,471,276], cidade:"Sossego", status:"Em Revisão", projetista:"Aluisio Felix", valor:38634.26, portas:32, clientes:26 },
+      { nome:"Expansão  Cluster 143 - Capim Grosso - BA", clusters:[143], cidade:"Capim Grosso", status:"Em Revisão", projetista:"Brendo / Jheydson", valor:31548.90, portas:40, clientes:15 },
+      { nome:"Projeto Cluster - 155, 326 e 358 -  Jacobina - BA", clusters:[155,326,358], cidade:"Jacobina", status:"Em Revisão", projetista:"Jheydson / Aluisio Felix", valor:159756.00, portas:176, clientes:89 },
+      { nome:"Expansão Clusters 69, 97, 171, 324 e 328 - Cubati - PB", clusters:[69,97,171,324,328], cidade:"Cubati", status:"Aguard. aprovação diretoria", projetista:"Yuri / Jheydson", valor:84573.65, portas:136, clientes:65 },
+      { nome:"Expansão Cluster 173 - Triunfo - PB", clusters:[173], cidade:"Triunfo", status:"Aguard. aprovação diretoria", projetista:"João Victor", valor:33784.00, portas:56, clientes:31 },
+      { nome:"Expansão Cluster 118, 125, 383 e 384 - São Vicente do Seridó - PB", clusters:[118,125,383,384], cidade:"São Vicente do Seridó", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:97669.00, portas:184, clientes:45 },
+      { nome:"Expansão Cluster 320 - São Vicente do Seridó - PB", clusters:[320], cidade:"São Vicente do Seridó", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:13226.00, portas:16, clientes:3 },
+      { nome:"Projeto Cluster 137 - Capim Grosso - BA", clusters:[137], cidade:"Capim Grosso", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:8555.00, portas:24, clientes:5 },
+      { nome:"Expansão Cluster 273 - Torre Brenan - Junco do Seridó - PB", clusters:[273], cidade:"Junco do Seridó", status:"Aguard. aprovação diretoria", projetista:"Aluisio Felix", valor:231838.00, portas:200, clientes:73 },
+      { nome:"2ª Opção - Expansão Cluster 273 - Torre Brenan - Junco do Seridó - PB", clusters:[273], cidade:"Junco do Seridó", status:"Aguard. aprovação diretoria", projetista:"Aluisio Felix", valor:223304.00, portas:200, clientes:73 },
+      { nome:"Expansão Cluster 387  - Juazeirinho - PB", clusters:[387], cidade:"Juazeirinho", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:6873.45, portas:24, clientes:7 },
+      { nome:"Expansão Cluster 201 - São João do Rio do Peixe - PB", clusters:[201], cidade:"São João do Rio do Peixe", status:"Aguard. aprovação diretoria", projetista:"Yuri", valor:54730.00, portas:64, clientes:23 },
+      { nome:"Escola Marculina e Cluster 172  - Caldeirão Grande - BA", clusters:[172], cidade:"Caldeirão Grande", status:"Aguard. aprovação diretoria", projetista:"Romário", valor:45497.00, portas:88, clientes:26 },
+      { nome:"Escola Matilde Cerqueira - + Clusters 72, 51, 363 e 368", clusters:[72,51,363,368], cidade:"Caldeirão Grande", status:"Aguard. aprovação diretoria", projetista:"Romário", valor:162022.80, portas:96, clientes:37 },
+      { nome:"Escola Francisco de Assis - Cluster 166 e 386 - Caldeirão Grande - BA", clusters:[166,386], cidade:"Caldeirão Grande", status:"Aguard. aprovação diretoria", projetista:"Romário", valor:128579.00, portas:128, clientes:49 },
+      { nome:"Escola Boanergis Lopes - Clusters 175 e 259 -Caldeirão Grande - BA", clusters:[175,259], cidade:"Caldeirão Grande", status:"Aguard. aprovação diretoria", projetista:"Romário", valor:68182.00, portas:64, clientes:28 },
+      { nome:"Expansão Cluster 327 - Picuí - PB", clusters:[327], cidade:"Picuí", status:"Aguard. aprovação diretoria", projetista:"Yuri / Jheydson", valor:7488.00, portas:8, clientes:4 },
+      { nome:"Expansão Cluster 39 - Ponto Novo - BA", clusters:[39], cidade:"Ponto Novo", status:"Aguard. aprovação diretoria", projetista:"Aluisio Felix", valor:51112.00, portas:40, clientes:4 },
+      { nome:"Expansão Cluster 275 - Sossego - PB", clusters:[275], cidade:"Sossego", status:"Reprovado", projetista:"Aluisio Felix", valor:118109.00, portas:80, clientes:1 },
+      { nome:"Expansão Cluster 198 - São Vicente do Seridó - PB", clusters:[198], cidade:"São Vicente do Seridó", status:"Reprovado", projetista:"Yuri", valor:21919.41, portas:16, clientes:11 },
     ];
 
     const PIPELINE = [
@@ -137,9 +141,9 @@
     const totalPendente = UNIVERSO_REAL - totalEmPipeline;
     const totalEmDesenv = projetos.filter(p => p.status === "Em desenvolvimento").reduce((s, p) => s + p.qtdClusters, 0);
     const totalAProjetar = totalPendente + totalEmDesenv;
-    const totalValor = 7267806.69;
+    const totalValor = 7134368.29;
     const totalClientes = projetos.reduce((s, p) => s + p.clientesPlanilha, 0);
-    const totalPortas = 8144;
+    const totalPortas = 7856;
     const mediaPorPorta = totalValor / totalPortas;
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -177,7 +181,7 @@
     const PROJETISTAS = ["João Victor", "Yuri"];
     const CLUSTERS_POR_PROJETISTA_DIA = 2;
     const CAPACIDADE_DIA = PROJETISTAS.length * CLUSTERS_POR_PROJETISTA_DIA; // 2 × 2 = 4/dia
-    const CRON_START = new Date("2026-05-05");
+    const CRON_START = new Date("2026-05-13");
     const nDiasProj = Math.ceil(totalAProjetar / CAPACIDADE_DIA);
     const diasProj = getDiasUteis(CRON_START, nDiasProj, FERIADOS);
     const fimProj = diasProj[diasProj.length - 1];
@@ -227,7 +231,7 @@
 
       const pct = d => (Math.ceil((d - inicio) / (1000*60*60*24)) / totalDias) * 100;
       const W = 100 / totalDias;
-      const HOJE = new Date("2026-05-05");
+      const HOJE = new Date("2026-05-13");
       const hojeVisible = HOJE >= inicio && HOJE <= fim;
       const hojeLeft = hojeVisible ? pct(HOJE) : null;
 
@@ -369,7 +373,7 @@
               <div>
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 05/05/2026</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 13/05/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
                   {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
@@ -405,10 +409,10 @@
                       const ufColors = {"BA":"#0073ea","PB":"#00c875","PE":"#fdab3d","RN":"#a25ddc"};
                       const clusterUF = {
                         155:"BA",201:"BA",158:"BA",291:"BA",143:"BA",166:"BA",170:"BA",163:"BA",177:"BA",244:"BA",139:"BA",169:"BA",230:"BA",150:"BA",156:"BA",167:"BA",140:"BA",151:"BA",232:"BA",256:"BA",224:"BA",288:"BA",172:"BA",188:"BA",322:"BA",175:"BA",264:"BA",148:"BA",305:"BA",203:"BA",233:"BA",157:"BA",396:"BA",228:"BA",335:"BA",205:"BA",270:"BA",323:"BA",257:"BA",160:"BA",214:"BA",231:"BA",352:"BA",153:"BA",269:"BA",235:"BA",283:"BA",180:"BA",261:"BA",262:"BA",243:"BA",389:"BA",193:"BA",240:"BA",349:"BA",356:"BA",149:"BA",206:"BA",174:"BA",272:"BA",144:"BA",204:"BA",225:"BA",248:"BA",216:"BA",343:"BA",309:"BA",340:"BA",407:"BA",236:"BA",189:"BA",242:"BA",365:"BA",176:"BA",259:"BA",308:"BA",373:"BA",146:"BA",181:"BA",237:"BA",263:"BA",301:"BA",311:"BA",381:"BA",179:"BA",238:"BA",304:"BA",286:"BA",410:"BA",154:"BA",178:"BA",197:"BA",239:"BA",268:"BA",316:"BA",367:"BA",306:"BA",183:"BA",209:"BA",310:"BA",390:"BA",168:"BA",211:"BA",260:"BA",298:"BA",357:"BA",368:"BA",372:"BA",279:"BA",404:"BA",348:"BA",377:"BA",419:"BA",200:"BA",207:"BA",78:"BA",88:"BA",94:"BA",111:"BA",114:"BA",427:"BA",341:"BA",103:"BA",292:"BA",439:"BA",452:"BA",49:"BA",37:"BA",128:"BA",108:"BA",465:"BA",361:"BA",62:"BA",359:"BA",271:"BA",447:"BA",415:"BA",
-                        5:"BA",8:"BA",9:"BA",10:"BA",21:"BA",26:"BA",27:"BA",33:"BA",39:"BA",40:"BA",50:"BA",83:"BA",112:"BA",123:"BA",210:"BA",293:"BA",360:"BA",369:"BA",371:"BA",413:"BA",450:"BA",208:"BA",315:"BA",350:"BA",358:"BA",137:"BA",
+                        5:"BA",8:"BA",9:"BA",10:"BA",21:"BA",26:"BA",27:"BA",33:"BA",39:"BA",40:"BA",50:"BA",83:"BA",112:"BA",123:"BA",210:"BA",293:"BA",360:"BA",369:"BA",371:"BA",413:"BA",450:"BA",208:"BA",315:"BA",350:"BA",358:"BA",137:"BA",363:"BA",386:"BA",
                         43:"PB",20:"PB",212:"PB",25:"PB",35:"PB",23:"PB",22:"PB",136:"PB",29:"PB",59:"PB",68:"PB",46:"PB",51:"PB",93:"PB",76:"PB",56:"PB",72:"PB",107:"PB",120:"PB",127:"PB",57:"PB",34:"PB",99:"PB",250:"PB",253:"PB",251:"PB",126:"PB",274:"PB",198:"PB",95:"PB",327:"PB",85:"PB",280:"PB",391:"PB",254:"PB",330:"PB",122:"PB",45:"PB",32:"PB",38:"PB",186:"PB",184:"PB",173:"PB",221:"PB",147:"PB",277:"PB",278:"PB",281:"PB",393:"PB",96:"PB",145:"PB",326:"PB",276:"PB",275:"PB",398:"PB",199:"PB",220:"PB",282:"PB",392:"PB",399:"PB",69:"PB",97:"PB",171:"PB",324:"PB",328:"PB",320:"PB",118:"PB",125:"PB",383:"PB",384:"PB",387:"PB",273:"PB",13:"PB",119:"PB",329:"PB",394:"PB",
                         63:"PB",138:"PB",185:"PB",325:"PB",400:"PB",102:"PB",168:"PB",172:"PB",219:"PB",252:"PB",279:"PB",321:"PB",322:"PB",471:"PB",395:"PB",397:"PB",160:"PB",
-                        7:"PE",6:"PE",14:"PE",18:"PE",16:"PE",11:"PE",19:"PE",17:"PE",197:"PE",316:"PE",182:"PE",245:"PE",246:"PE",379:"PE",
+                        7:"PE",6:"PE",14:"PE",18:"PE",16:"PE",11:"PE",19:"PE",17:"PE",197:"PE",316:"PE",182:"PE",245:"PE",246:"PE",379:"PE",247:"PE",
                         113:"RN",131:"RN",134:"RN",132:"RN",133:"RN",
                       };
                       const pipelineUF = {};
@@ -621,7 +625,7 @@
                 <div>
                   <div style={{ marginBottom:16 }}>
                     <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão por Projeto</div>
-                    <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalProj} projetos (itens Monday) · Atualizado em 05/05/2026</div>
+                    <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalProj} projetos (itens Monday) · Atualizado em 13/05/2026</div>
                   </div>
 
                   {/* Sub-tabs */}
