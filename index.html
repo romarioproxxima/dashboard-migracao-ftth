@@ -200,9 +200,10 @@
     const semanasProj = agruparSemanas(allDiasProj);
 
     // ─── CRONOGRAMA VISTORIA ──────────────────────────────────────────────────────
-    // Vistoria só começa após o fim da elaboração dos projetos
+    // Vistoria começa 1 semana (5 dias úteis) após o início da elaboração
+    // não precisa esperar todos os projetos prontos — processo rolling
     const VIST_POR_DIA = 6;
-    const VIST_START = (() => { const d = new Date(fimProj); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6||FERIADOS_VIST.includes(d.toISOString().split("T")[0])) d.setDate(d.getDate()+1); return d; })();
+    const VIST_START = getDiasUteis(CRON_START, 6, FERIADOS)[5]; // 6º dia útil = 2ª semana
     // Derivar listaVist ANTES de TOTAL_VISTORIA para que o total reflita os dados reais
     const jaAguardando = projetos.filter(p => p.status === "Aguardando vistoria");
     const listaVist = [
@@ -218,86 +219,103 @@
     const semanasVist = agruparSemanas(allDiasVist);
 
     // ─── CRONOGRAMA AVALIAÇÃO ──────────────────────────────────────────────────
-    // 3 dias úteis de avaliação por projeto após a conclusão da vistoria
-    const AVAL_DIAS = 3;
-    const AVAL_START = (() => { const d = new Date(fimVist); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6||FERIADOS.includes(d.toISOString().split("T")[0])) d.setDate(d.getDate()+1); return d; })();
-    const diasAval = getDiasUteis(AVAL_START, AVAL_DIAS, FERIADOS);
+    // Avaliação começa 3 dias úteis após o início da vistoria (processo rolling)
+    const AVAL_DIAS = 3; // dias úteis por projeto
+    const AVAL_START = getDiasUteis(VIST_START, AVAL_DIAS + 1, FERIADOS)[AVAL_DIAS];
+    // Avaliação dura o mesmo tempo que vistoria (mesmos projetos, 6/dia)
+    const nDiasAval = nDiasVist + AVAL_DIAS; // avaliação começa depois, termina depois
+    const diasAval = getDiasUteis(AVAL_START, nDiasVist, FERIADOS);
     const fimAval = diasAval[diasAval.length - 1];
+    const semanasAval = agruparSemanas(diasAval.map((dia,i) => ({
+      dia,
+      projsDia: listaVist.slice(i*VIST_POR_DIA, (i+1)*VIST_POR_DIA)
+    })));
 
-    // ─── GANTT UNIFICADO ─────────────────────────────────────────────────────────
+    // ─── GANTT TRIFÁSICO ─────────────────────────────────────────────────────────
     function GanttUnificado() {
       const HOJE_G = new Date("2026-05-13");
+      // 3 fases com seus dados semanais
       const fases = [
-        { label:"🏗️ Elaboração", desc:"de Projetos", inicio:CRON_START, fim:fimProj, color:"#0073ea", sub:`${totalAProjetar} clusters · ${PROJETISTAS.length} projetistas · ${CAPACIDADE_DIA}/dia` },
-        { label:"🔍 Vistoria",   desc:"de Campo",    inicio:VIST_START, fim:fimVist, color:"#00c875", sub:`${TOTAL_VISTORIA} projetos · ${VIST_POR_DIA}/dia` },
-        { label:"📋 Avaliação",  desc:"dos Projetos", inicio:AVAL_START, fim:fimAval, color:"#fdab3d", sub:`${AVAL_DIAS} dias úteis por projeto` },
+        { label:"🏗️ Elaboração", color:"#0073ea", inicio:CRON_START, fim:fimProj, semanas:semanasProj,
+          getTot: s => s.dias.reduce((a,d)=>a+d.total,0), getFmt: n=>`${n} clusters` },
+        { label:"🔍 Vistoria",   color:"#00c875", inicio:VIST_START, fim:fimVist, semanas:semanasVist,
+          getTot: s => s.dias.reduce((a,d)=>a+d.projsDia.length,0), getFmt: n=>`${n} vistorias` },
+        { label:"📋 Avaliação",  color:"#fdab3d", inicio:AVAL_START, fim:fimAval, semanas:semanasAval,
+          getTot: s => s.dias.reduce((a,d)=>a+d.projsDia.length,0), getFmt: n=>`${n} avaliações` },
       ];
+
       const gIni = CRON_START, gFim = fimAval;
       const totalD = Math.ceil((gFim - gIni)/(1000*60*60*24)) + 1;
-      const allDG = []; const cur2 = new Date(gIni);
-      while(cur2 <= gFim){ allDG.push(new Date(cur2)); cur2.setDate(cur2.getDate()+1); }
+      const allDG = []; const c2 = new Date(gIni);
+      while(c2 <= gFim){ allDG.push(new Date(c2)); c2.setDate(c2.getDate()+1); }
       const meses2 = [];
       allDG.forEach(d => {
-        const m = d.getMonth(); const y = d.getFullYear();
-        const k = `${y}-${m}`;
-        if(!meses2.length || meses2[meses2.length-1].key !== k)
-          meses2.push({ key:k, label:d.toLocaleDateString("pt-BR",{month:"short"}), count:1 });
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if(!meses2.length || meses2[meses2.length-1].key!==key)
+          meses2.push({key, label:d.toLocaleDateString("pt-BR",{month:"short"}), count:1});
         else meses2[meses2.length-1].count++;
       });
-      const pct = d => Math.max(0, Math.ceil((d - gIni)/(1000*60*60*24)) / totalD * 100);
-      const hoje2Visible = HOJE_G >= gIni && HOJE_G <= gFim;
+      const pct = d => Math.max(0, Math.ceil((d-gIni)/(1000*60*60*24))/totalD*100);
+      const W = 100/totalD;
       const hoje2Left = pct(HOJE_G);
+      const hoje2Vis = HOJE_G >= gIni && HOJE_G <= gFim;
+
       return (
-        <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginBottom:16, overflowX:"auto" }}>
-          <div style={{ fontWeight:700, fontSize:14, marginBottom:16, color:"#1f1f1f" }}>📊 Cronograma Geral</div>
-          <div style={{ minWidth:580 }}>
+        <div style={{background:"#fff",borderRadius:14,padding:20,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginBottom:16,overflowX:"auto"}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14,color:"#1f1f1f"}}>📊 Cronograma Geral — 3 Fases em Paralelo</div>
+          <div style={{minWidth:600}}>
             {/* Cabeçalho de meses */}
-            <div style={{ display:"flex", marginLeft:176, marginBottom:6 }}>
-              {meses2.map((m,i) => (
-                <div key={i} style={{ width:`${(m.count/totalD)*100}%`, fontSize:10, fontWeight:700, color:"#888", textAlign:"center", borderLeft:"1px solid #e8e8e8", paddingLeft:2 }}>
+            <div style={{display:"flex",marginLeft:156,marginBottom:4}}>
+              {meses2.map((m,i)=>(
+                <div key={i} style={{width:`${(m.count/totalD)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #e8e8e8",paddingLeft:2}}>
                   {m.label.toUpperCase()}
                 </div>
               ))}
             </div>
-            {/* Linhas de fases */}
-            {fases.map((fase, i) => {
-              const left = pct(fase.inicio);
-              const right = pct(fase.fim);
-              const width = Math.max(1, right - left + (1/totalD*100));
-              const durDias = Math.ceil((fase.fim - fase.inicio)/(1000*60*60*24))+1;
+
+            {/* Uma linha por fase */}
+            {fases.map((fase,fi)=>{
+              const sems = fase.semanas;
+              const acums = sems.map((_,i)=>sems.slice(0,i+1).reduce((a,s)=>a+fase.getTot(s),0));
+              const totalFase = acums[acums.length-1]||0;
               return (
-                <div key={i} style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
-                  <div style={{ width:176, flexShrink:0, paddingRight:12, borderRight:"2px solid #f0f0f0" }}>
-                    <div style={{ fontSize:13, fontWeight:700, color:"#222" }}>{fase.label}</div>
-                    <div style={{ fontSize:10, color:"#aaa" }}>{fase.desc}</div>
-                    <div style={{ fontSize:10, color:fase.color, fontWeight:600, marginTop:2 }}>
-                      {fmtShort(fase.inicio)} → {fmtShort(fase.fim)}
-                    </div>
+                <div key={fi} style={{display:"flex",alignItems:"flex-start",marginBottom:10}}>
+                  {/* Label */}
+                  <div style={{width:156,flexShrink:0,paddingRight:10,textAlign:"right"}}>
+                    <div style={{fontSize:12,fontWeight:700,color:fase.color}}>{fase.label}</div>
+                    <div style={{fontSize:9,color:"#bbb"}}>{fmtShort(fase.inicio)}–{fmtShort(fase.fim)}</div>
                   </div>
-                  <div style={{ flex:1, position:"relative", height:34, background:"#f5f6f8", borderRadius:8, marginLeft:10 }}>
-                    {/* Grid lines */}
-                    {allDG.filter(d => d.getDate()===1).map((d,j) => (
-                      <div key={j} style={{ position:"absolute", left:`${pct(d)}%`, top:0, width:1, height:"100%", background:"#e0e0e0", zIndex:1 }} />
+                  {/* Timeline row */}
+                  <div style={{flex:1,position:"relative",height:30,background:"#f5f6f8",borderRadius:6}}>
+                    {/* Linha de grade */}
+                    {allDG.filter(d=>d.getDay()===1).map((d,j)=>(
+                      <div key={j} style={{position:"absolute",left:`${pct(d)}%`,top:0,width:1,height:"100%",background:"#e8e8e8"}}/>
                     ))}
                     {/* Hoje */}
-                    {hoje2Visible && (
-                      <div style={{ position:"absolute", left:`${hoje2Left}%`, top:-6, width:2, height:46, background:"#e2445c", zIndex:5 }}>
-                        <div style={{ position:"absolute", top:-13, left:-10, fontSize:9, color:"#e2445c", fontWeight:700, background:"#fff", padding:"1px 4px", borderRadius:3, border:"1px solid #e2445c", whiteSpace:"nowrap" }}>hoje</div>
-                      </div>
-                    )}
-                    {/* Barra da fase */}
-                    <div style={{ position:"absolute", left:`${left}%`, width:`${width}%`, height:"100%", background:fase.color, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"space-between", paddingLeft:10, paddingRight:8, zIndex:3, opacity:0.9, boxShadow:`0 2px 6px ${fase.color}55` }}>
-                      <span style={{ fontSize:11, fontWeight:800, color:"#fff", whiteSpace:"nowrap" }}>{fase.sub}</span>
-                      <span style={{ fontSize:10, fontWeight:600, color:"rgba(255,255,255,0.85)", whiteSpace:"nowrap", marginLeft:8 }}>{durDias}d</span>
-                    </div>
+                    {hoje2Vis && <div style={{position:"absolute",left:`${hoje2Left}%`,top:0,width:2,height:"100%",background:"#e2445c",zIndex:5}}/>}
+                    {/* Barras semanais */}
+                    {sems.map((s,si)=>{
+                      const dIni = s.dias[0].dia;
+                      const dFim = s.dias[s.dias.length-1].dia;
+                      const left = pct(dIni);
+                      const width = Math.max(0.5, pct(dFim)-left+(W));
+                      const tot = fase.getTot(s);
+                      if(tot===0) return null;
+                      return (
+                        <div key={si} style={{position:"absolute",left:`${left}%`,width:`${width}%`,top:3,height:24,background:fase.color,borderRadius:5,display:"flex",alignItems:"center",paddingLeft:6,zIndex:3,opacity:0.88,boxShadow:`0 1px 4px ${fase.color}44`}}>
+                          <span style={{fontSize:10,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{fase.getFmt(tot)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
+
             {/* Legenda */}
-            <div style={{ display:"flex", gap:20, marginLeft:186, marginTop:6, fontSize:10, color:"#888", flexWrap:"wrap" }}>
-              {fases.map((f,i) => <span key={i}><span style={{ display:"inline-block", width:12, height:10, background:f.color, borderRadius:2, marginRight:4, opacity:0.9 }} />{f.label.replace(/^[^\s]+\s/,'')}{f.desc}</span>)}
-              <span><span style={{ display:"inline-block", width:2, height:10, background:"#e2445c", marginRight:4 }} />Hoje</span>
+            <div style={{display:"flex",gap:16,marginLeft:166,marginTop:8,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
+              {fases.map((f,i)=><span key={i}><span style={{display:"inline-block",width:12,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.88}}/>{f.label.replace(/^[^\s]+\s/,"")}</span>)}
+              <span><span style={{display:"inline-block",width:2,height:10,background:"#e2445c",marginRight:4}}/>Hoje</span>
             </div>
           </div>
         </div>
@@ -1232,7 +1250,7 @@
                   {[
                     { label:"Projetos a avaliar", value:String(TOTAL_VISTORIA), sub:"total após vistoria", color:"#fdab3d", icon:"📋" },
                     { label:"Dias por projeto", value:String(AVAL_DIAS), sub:"dias úteis de avaliação", color:"#e2445c", icon:"📅" },
-                    { label:"Início", value:fmtShort(AVAL_START), sub:"após fim da vistoria", color:"#0073ea", icon:"🚀" },
+                    { label:"Início", value:fmtShort(AVAL_START), sub:"3 dias após início vistoria", color:"#0073ea", icon:"🚀" },
                     { label:"Término", value:fmtShort(fimAval), sub:"2026", color:"#00c875", icon:"🏁" },
                   ].map(c => (
                     <div key={c.label} style={{ background:"#fff", borderRadius:14, padding:"14px 16px", boxShadow:"0 2px 10px rgba(0,0,0,0.07)", borderLeft:`4px solid ${c.color}`, flex:1, minWidth:120 }}>
