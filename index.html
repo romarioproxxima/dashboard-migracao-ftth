@@ -231,93 +231,101 @@
       projsDia: listaVist.slice(i*VIST_POR_DIA, (i+1)*VIST_POR_DIA)
     })));
 
-    // ─── GANTT TRIFÁSICO (barras horizontais por fase) ───────────────────────────
+    // ─── GANTT TRIFÁSICO POR SEMANA ──────────────────────────────────────────────
     function GanttUnificado() {
       const HOJE_G = new Date("2026-05-13");
-      // Cada fase: início, fim e cor distintos
-      const fases = [
-        { label:"🏗️ Elaboração", color:"#0073ea", inicio:CRON_START, fim:fimProj,
-          detail:`${totalAProjetar} clusters · ${CAPACIDADE_DIA}/dia · ${PROJETISTAS.length} projetistas` },
-        { label:"🔍 Vistoria",   color:"#00c875", inicio:VIST_START, fim:fimVist,
-          detail:`${TOTAL_VISTORIA} projetos · ${VIST_POR_DIA}/dia` },
-        { label:"📋 Avaliação",  color:"#fdab3d", inicio:AVAL_START, fim:fimAval,
-          detail:`${AVAL_DIAS} dias por projeto após vistoria` },
-      ];
       const gIni = CRON_START;
       const gFim = fimAval;
       const spanMs = gFim - gIni;
-      const pct = d => Math.max(0, (d - gIni) / spanMs * 100);
-      const pctW = (a,b) => Math.max(0.5, (b - a) / spanMs * 100);
-      // Meses para o cabeçalho
-      const allDays2 = []; const cc = new Date(gIni);
-      while(cc <= gFim){ allDays2.push(new Date(cc)); cc.setDate(cc.getDate()+1); }
-      const meses2 = [];
-      allDays2.forEach(d => {
-        const key = `${d.getFullYear()}-${d.getMonth()}`;
-        if(!meses2.length || meses2[meses2.length-1].key!==key)
-          meses2.push({key,label:d.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}),count:1});
+      const pct = d => Math.max(0,(d-gIni)/spanMs*100);
+      const W = 1/((gFim-gIni)/(1000*60*60*24))*100;
+
+      // Cabeçalho de meses
+      const allDG=[]; const cc=new Date(gIni);
+      while(cc<=gFim){allDG.push(new Date(cc));cc.setDate(cc.getDate()+1);}
+      const meses2=[];
+      allDG.forEach(d=>{
+        const key=`${d.getFullYear()}-${d.getMonth()}`;
+        if(!meses2.length||meses2[meses2.length-1].key!==key)
+          meses2.push({key,label:d.toLocaleDateString("pt-BR",{month:"short"}),count:1});
         else meses2[meses2.length-1].count++;
       });
-      const hoje2Vis = HOJE_G >= gIni && HOJE_G <= gFim;
+
+      // Unir todas as semanas num único calendário
+      const semMap={};
+      const addSem=(sems,fase)=>{
+        sems.forEach(s=>{
+          const k=s.inicio?s.inicio.toISOString().split("T")[0]:s.dias[0].dia.toISOString().split("T")[0];
+          if(!semMap[k]) semMap[k]={ini:s.dias[0].dia, fim:s.dias[s.dias.length-1].dia, fases:{}};
+          semMap[k].fases[fase]=s;
+        });
+      };
+      addSem(semanasProj,"proj");
+      addSem(semanasVist,"vist");
+      addSem(semanasAval,"aval");
+      const semanas3 = Object.values(semMap).sort((a,b)=>a.ini-b.ini);
+
+      const fasesCfg = [
+        {key:"proj", color:"#0073ea", label:"Elaboração",
+         getTot:s=>s.dias.reduce((a,d)=>a+d.total,0), fmt:n=>`${n} clusters`},
+        {key:"vist", color:"#00c875", label:"Vistoria",
+         getTot:s=>s.dias.reduce((a,d)=>a+d.projsDia.length,0), fmt:n=>`${n} vistorias`},
+        {key:"aval", color:"#fdab3d", label:"Avaliação",
+         getTot:s=>s.dias.reduce((a,d)=>a+d.projsDia.length,0), fmt:n=>`${n} avaliações`},
+      ];
+
+      const hoje2Vis = HOJE_G>=gIni&&HOJE_G<=gFim;
       const hoje2Left = pct(HOJE_G);
-      // Semanas para grid vertical
-      const semLines = allDays2.filter(d=>d.getDay()===1).map(d=>pct(d));
+
       return (
         <div style={{background:"#fff",borderRadius:14,padding:20,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginBottom:16,overflowX:"auto"}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:14,color:"#1f1f1f"}}>📊 Cronograma Geral — Visão de Barras</div>
-          <div style={{minWidth:560}}>
-            {/* Cabeçalho de meses */}
-            <div style={{display:"flex",marginLeft:170,marginBottom:4}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14,color:"#1f1f1f"}}>📊 Cronograma Geral — 3 Fases em Paralelo</div>
+          <div style={{minWidth:580}}>
+            {/* Meses */}
+            <div style={{display:"flex",marginLeft:124,marginBottom:4}}>
               {meses2.map((m,i)=>(
-                <div key={i} style={{width:`${(m.count/allDays2.length)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #ddd",paddingLeft:2}}>
+                <div key={i} style={{width:`${(m.count/allDG.length)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #e0e0e0",paddingLeft:2}}>
                   {m.label.toUpperCase()}
                 </div>
               ))}
             </div>
-            {/* Fases */}
-            {fases.map((fase,fi)=>{
-              const left  = pct(fase.inicio);
-              const width = pctW(fase.inicio, fase.fim);
-              const dias  = Math.ceil((fase.fim - fase.inicio)/(1000*60*60*24));
-              const semanasCount = Math.ceil(dias/7);
+            {/* Linhas de semana por fase */}
+            {semanas3.map((sem,si)=>{
+              const left = pct(sem.ini);
+              const wid  = Math.max(0.5, pct(sem.fim)-left+W);
+              const label= `Sem. ${si+1}`;
+              const datas= `${sem.ini.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}–${sem.fim.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`;
               return (
-                <div key={fi} style={{display:"flex",alignItems:"center",marginBottom:18}}>
-                  {/* Label */}
-                  <div style={{width:170,flexShrink:0,textAlign:"right",paddingRight:14,borderRight:`3px solid ${fase.color}`}}>
-                    <div style={{fontSize:13,fontWeight:800,color:fase.color}}>{fase.label}</div>
-                    <div style={{fontSize:10,color:"#888",marginTop:2}}>{fmtShort(fase.inicio)} → {fmtShort(fase.fim)}</div>
-                    <div style={{fontSize:10,color:"#aaa"}}>{semanasCount} semanas · {dias} dias</div>
+                <div key={si} style={{display:"flex",alignItems:"center",marginBottom:6}}>
+                  {/* Label semana */}
+                  <div style={{width:124,flexShrink:0,textAlign:"right",paddingRight:10,fontSize:11,color:"#555",fontWeight:600}}>
+                    {label}
+                    <div style={{fontSize:9,color:"#bbb",fontWeight:400}}>{datas}</div>
                   </div>
-                  {/* Container da barra */}
-                  <div style={{flex:1,position:"relative",height:42,background:"#f5f6f8",borderRadius:8,marginLeft:10}}>
-                    {/* Linhas de semana */}
-                    {semLines.map((l,j)=>(
-                      <div key={j} style={{position:"absolute",left:`${l}%`,top:0,width:1,height:"100%",background:"#e0e0e0",zIndex:1}}/>
-                    ))}
-                    {/* Marcador hoje */}
-                    {hoje2Vis && (
-                      <div style={{position:"absolute",left:`${hoje2Left}%`,top:-8,width:2,height:58,background:"#e2445c",zIndex:6}}>
-                        <div style={{position:"absolute",top:-13,left:-10,fontSize:9,color:"#e2445c",fontWeight:700,background:"#fff",padding:"1px 4px",borderRadius:3,border:"1px solid #e2445c",whiteSpace:"nowrap"}}>hoje</div>
-                      </div>
-                    )}
-                    {/* Barra da fase */}
-                    <div style={{position:"absolute",left:`${left}%`,width:`${width}%`,top:4,height:34,background:fase.color,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 12px",zIndex:4,opacity:0.92,boxShadow:`0 3px 8px ${fase.color}55`,overflow:"hidden"}}>
-                      <span style={{fontSize:11,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{fase.detail}</span>
-                      <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.8)",whiteSpace:"nowrap",marginLeft:8}}>{dias}d</span>
-                    </div>
-                    {/* Marcador de início */}
-                    <div style={{position:"absolute",left:`${left}%`,top:-2,width:2,height:46,background:fase.color,zIndex:5,opacity:0.5}}/>
-                    {/* Marcador de fim */}
-                    <div style={{position:"absolute",left:`${left+width}%`,top:-2,width:2,height:46,background:fase.color,zIndex:5,opacity:0.5}}/>
+                  {/* Área de barras */}
+                  <div style={{flex:1,position:"relative",height:fasesCfg.filter(f=>sem.fases[f.key]).length*22+8,background:"#f8f9fb",borderRadius:6}}>
+                    {/* Hoje */}
+                    {hoje2Vis&&<div style={{position:"absolute",left:`${hoje2Left}%`,top:-4,width:2,height:"calc(100% + 8px)",background:"#e2445c",zIndex:6}}/>}
+                    {/* Barras das fases ativas nessa semana, empilhadas verticalmente */}
+                    {fasesCfg.map((fc,fi)=>{
+                      const s=sem.fases[fc.key];
+                      if(!s) return null;
+                      const tot=fc.getTot(s);
+                      if(tot===0) return null;
+                      return (
+                        <div key={fi} style={{position:"absolute",left:`${left}%`,width:`${wid}%`,top:fi*(22)+4,height:18,background:fc.color,borderRadius:5,display:"flex",alignItems:"center",paddingLeft:6,zIndex:3,opacity:0.88,boxShadow:`0 1px 3px ${fc.color}44`}}>
+                          <span style={{fontSize:10,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{fc.fmt(tot)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
             {/* Legenda */}
-            <div style={{display:"flex",gap:20,marginLeft:184,marginTop:4,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
-              {fases.map((f,i)=><span key={i}><span style={{display:"inline-block",width:14,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.9}}/>{f.label.replace(/^[^\s]+\s/,"")}</span>)}
+            <div style={{display:"flex",gap:16,marginLeft:134,marginTop:10,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
+              {fasesCfg.map((f,i)=><span key={i}><span style={{display:"inline-block",width:12,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.88}}/>{f.label}</span>)}
               <span><span style={{display:"inline-block",width:2,height:10,background:"#e2445c",marginRight:4}}/>Hoje</span>
-              <span><span style={{display:"inline-block",width:1,height:10,background:"#ccc",marginRight:4}}/>Semana</span>
             </div>
           </div>
         </div>
