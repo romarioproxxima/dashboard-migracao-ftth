@@ -217,10 +217,96 @@
     const allDiasVist = diasVist.map((dia, i) => ({ dia, projsDia: listaVist.slice(i * VIST_POR_DIA, i * VIST_POR_DIA + VIST_POR_DIA) }));
     const semanasVist = agruparSemanas(allDiasVist);
 
-    // ─── GANTT ────────────────────────────────────────────────────────────────────
+    // ─── CRONOGRAMA AVALIAÇÃO ──────────────────────────────────────────────────
+    // 3 dias úteis de avaliação por projeto após a conclusão da vistoria
+    const AVAL_DIAS = 3;
+    const AVAL_START = (() => { const d = new Date(fimVist); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6||FERIADOS.includes(d.toISOString().split("T")[0])) d.setDate(d.getDate()+1); return d; })();
+    const diasAval = getDiasUteis(AVAL_START, AVAL_DIAS, FERIADOS);
+    const fimAval = diasAval[diasAval.length - 1];
+
+    // ─── GANTT UNIFICADO ─────────────────────────────────────────────────────────
+    function GanttUnificado() {
+      const HOJE_G = new Date("2026-05-13");
+      const fases = [
+        { label:"🏗️ Elaboração", desc:"de Projetos", inicio:CRON_START, fim:fimProj, color:"#0073ea", sub:`${totalAProjetar} clusters · ${PROJETISTAS.length} projetistas · ${CAPACIDADE_DIA}/dia` },
+        { label:"🔍 Vistoria",   desc:"de Campo",    inicio:VIST_START, fim:fimVist, color:"#00c875", sub:`${TOTAL_VISTORIA} projetos · ${VIST_POR_DIA}/dia` },
+        { label:"📋 Avaliação",  desc:"dos Projetos", inicio:AVAL_START, fim:fimAval, color:"#fdab3d", sub:`${AVAL_DIAS} dias úteis por projeto` },
+      ];
+      const gIni = CRON_START, gFim = fimAval;
+      const totalD = Math.ceil((gFim - gIni)/(1000*60*60*24)) + 1;
+      const allDG = []; const cur2 = new Date(gIni);
+      while(cur2 <= gFim){ allDG.push(new Date(cur2)); cur2.setDate(cur2.getDate()+1); }
+      const meses2 = [];
+      allDG.forEach(d => {
+        const m = d.getMonth(); const y = d.getFullYear();
+        const k = `${y}-${m}`;
+        if(!meses2.length || meses2[meses2.length-1].key !== k)
+          meses2.push({ key:k, label:d.toLocaleDateString("pt-BR",{month:"short"}), count:1 });
+        else meses2[meses2.length-1].count++;
+      });
+      const pct = d => Math.max(0, Math.ceil((d - gIni)/(1000*60*60*24)) / totalD * 100);
+      const hoje2Visible = HOJE_G >= gIni && HOJE_G <= gFim;
+      const hoje2Left = pct(HOJE_G);
+      return (
+        <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginBottom:16, overflowX:"auto" }}>
+          <div style={{ fontWeight:700, fontSize:14, marginBottom:16, color:"#1f1f1f" }}>📊 Cronograma Geral</div>
+          <div style={{ minWidth:580 }}>
+            {/* Cabeçalho de meses */}
+            <div style={{ display:"flex", marginLeft:176, marginBottom:6 }}>
+              {meses2.map((m,i) => (
+                <div key={i} style={{ width:`${(m.count/totalD)*100}%`, fontSize:10, fontWeight:700, color:"#888", textAlign:"center", borderLeft:"1px solid #e8e8e8", paddingLeft:2 }}>
+                  {m.label.toUpperCase()}
+                </div>
+              ))}
+            </div>
+            {/* Linhas de fases */}
+            {fases.map((fase, i) => {
+              const left = pct(fase.inicio);
+              const right = pct(fase.fim);
+              const width = Math.max(1, right - left + (1/totalD*100));
+              const durDias = Math.ceil((fase.fim - fase.inicio)/(1000*60*60*24))+1;
+              return (
+                <div key={i} style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
+                  <div style={{ width:176, flexShrink:0, paddingRight:12, borderRight:"2px solid #f0f0f0" }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#222" }}>{fase.label}</div>
+                    <div style={{ fontSize:10, color:"#aaa" }}>{fase.desc}</div>
+                    <div style={{ fontSize:10, color:fase.color, fontWeight:600, marginTop:2 }}>
+                      {fmtShort(fase.inicio)} → {fmtShort(fase.fim)}
+                    </div>
+                  </div>
+                  <div style={{ flex:1, position:"relative", height:34, background:"#f5f6f8", borderRadius:8, marginLeft:10 }}>
+                    {/* Grid lines */}
+                    {allDG.filter(d => d.getDate()===1).map((d,j) => (
+                      <div key={j} style={{ position:"absolute", left:`${pct(d)}%`, top:0, width:1, height:"100%", background:"#e0e0e0", zIndex:1 }} />
+                    ))}
+                    {/* Hoje */}
+                    {hoje2Visible && (
+                      <div style={{ position:"absolute", left:`${hoje2Left}%`, top:-6, width:2, height:46, background:"#e2445c", zIndex:5 }}>
+                        <div style={{ position:"absolute", top:-13, left:-10, fontSize:9, color:"#e2445c", fontWeight:700, background:"#fff", padding:"1px 4px", borderRadius:3, border:"1px solid #e2445c", whiteSpace:"nowrap" }}>hoje</div>
+                      </div>
+                    )}
+                    {/* Barra da fase */}
+                    <div style={{ position:"absolute", left:`${left}%`, width:`${width}%`, height:"100%", background:fase.color, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"space-between", paddingLeft:10, paddingRight:8, zIndex:3, opacity:0.9, boxShadow:`0 2px 6px ${fase.color}55` }}>
+                      <span style={{ fontSize:11, fontWeight:800, color:"#fff", whiteSpace:"nowrap" }}>{fase.sub}</span>
+                      <span style={{ fontSize:10, fontWeight:600, color:"rgba(255,255,255,0.85)", whiteSpace:"nowrap", marginLeft:8 }}>{durDias}d</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {/* Legenda */}
+            <div style={{ display:"flex", gap:20, marginLeft:186, marginTop:6, fontSize:10, color:"#888", flexWrap:"wrap" }}>
+              {fases.map((f,i) => <span key={i}><span style={{ display:"inline-block", width:12, height:10, background:f.color, borderRadius:2, marginRight:4, opacity:0.9 }} />{f.label.replace(/^[^\s]+\s/,'')}{f.desc}</span>)}
+              <span><span style={{ display:"inline-block", width:2, height:10, background:"#e2445c", marginRight:4 }} />Hoje</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── GANTT POR SEMANA ─────────────────────────────────────────────────────────
     function GanttChart({ semanas, inicio, fim, corBarra, feriados, tipo }) {
       const totalDias = Math.ceil((fim - inicio) / (1000*60*60*24)) + 1;
-
       const allDays = [];
       const cur = new Date(inicio);
       while (cur <= fim) { allDays.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
@@ -877,33 +963,20 @@
             {/* ══ CRONOGRAMA ══ */}
             {modulo === "cronograma" && (
               <div>
-                <div style={{ marginBottom:16 }}>
+                <div style={{ marginBottom:12 }}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>Elaboração de projetos + vistorias em sequência</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>3 fases sequenciais: Elaboração → Vistoria → Avaliação</div>
                 </div>
-                {/* Seletor de seção */}
-                <div style={{ display:"flex", gap:8, marginBottom:20 }}>
-                  {[["projetos","🏗️ Elaboração de Projetos"],["vistoria","🔍 Vistoria"]].map(([sec,lbl]) => (
-                    <button key={sec} onClick={() => setCronSec(sec)} style={{ padding:"9px 22px", borderRadius:10, border:"none", cursor:"pointer", fontWeight:700, fontSize:13, background:cronSec===sec?"#0073ea":"#fff", color:cronSec===sec?"#fff":"#555", boxShadow:"0 2px 8px rgba(0,0,0,0.08)", display:"flex", alignItems:"center", gap:8 }}>
+                {/* Gantt unificado das 3 fases */}
+                <GanttUnificado />
+                {/* Seletor de seção para detalhes */}
+                <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+                  {[["projetos","🏗️ Elaboração",`${totalAProjetar} clusters`,"#0073ea"],["vistoria","🔍 Vistoria",`${TOTAL_VISTORIA} vistorias`,"#00c875"],["avaliacao","📋 Avaliação",`${AVAL_DIAS} dias/proj`,"#fdab3d"]].map(([sec,lbl,qtd,cor]) => (
+                    <button key={sec} onClick={() => setCronSec(sec)} style={{ padding:"8px 18px", borderRadius:10, border:`2px solid ${cronSec===sec?cor:"#e0e0e0"}`, cursor:"pointer", fontWeight:700, fontSize:12, background:cronSec===sec?cor:"#fff", color:cronSec===sec?"#fff":"#555", display:"flex", alignItems:"center", gap:8 }}>
                       {lbl}
-                      {sec==="projetos" && <span style={{ background:cronSec===sec?"rgba(255,255,255,0.25)":"#e8f0fe", color:cronSec===sec?"#fff":"#0073ea", borderRadius:20, padding:"1px 8px", fontSize:11, fontWeight:700 }}>{totalAProjetar} clusters</span>}
-                      {sec==="vistoria" && <span style={{ background:cronSec===sec?"rgba(255,255,255,0.25)":"#e8f5e9", color:cronSec===sec?"#fff":"#00c875", borderRadius:20, padding:"1px 8px", fontSize:11, fontWeight:700 }}>{TOTAL_VISTORIA} vistorias</span>}
+                      <span style={{ background:cronSec===sec?"rgba(255,255,255,0.25)":"#f0f0f0", color:cronSec===sec?"#fff":"#888", borderRadius:20, padding:"1px 8px", fontSize:10, fontWeight:700 }}>{qtd}</span>
                     </button>
                   ))}
-                </div>
-                {/* Linha do tempo geral */}
-                <div style={{ background:"#fff", borderRadius:12, padding:"12px 18px", marginBottom:18, boxShadow:"0 2px 8px rgba(0,0,0,0.05)", display:"flex", alignItems:"center", gap:0, overflowX:"auto" }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-                    <div style={{ width:12, height:12, borderRadius:"50%", background:"#0073ea" }} />
-                    <span style={{ fontSize:12, color:"#555", fontWeight:600 }}>🏗️ Elaboração</span>
-                    <span style={{ fontSize:11, color:"#0073ea", fontWeight:700 }}>{fmtShort(CRON_START)} → {fmtShort(fimProj)}</span>
-                  </div>
-                  <div style={{ flex:1, height:3, background:"linear-gradient(to right, #0073ea, #00c875)", margin:"0 12px", minWidth:40, borderRadius:2 }} />
-                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-                    <div style={{ width:12, height:12, borderRadius:"50%", background:"#00c875" }} />
-                    <span style={{ fontSize:12, color:"#555", fontWeight:600 }}>🔍 Vistoria</span>
-                    <span style={{ fontSize:11, color:"#00c875", fontWeight:700 }}>{fmtShort(VIST_START)} → {fmtShort(fimVist)}</span>
-                  </div>
                 </div>
 
                 {/* ── SEÇÃO ELABORAÇÃO ── */}
@@ -1151,6 +1224,49 @@
                     </table>
                   </div>
                 )}
+                </div>}
+
+                {/* ── SEÇÃO AVALIAÇÃO ── */}
+                {cronSec === "avaliacao" && <div>
+                <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
+                  {[
+                    { label:"Projetos a avaliar", value:String(TOTAL_VISTORIA), sub:"total após vistoria", color:"#fdab3d", icon:"📋" },
+                    { label:"Dias por projeto", value:String(AVAL_DIAS), sub:"dias úteis de avaliação", color:"#e2445c", icon:"📅" },
+                    { label:"Início", value:fmtShort(AVAL_START), sub:"após fim da vistoria", color:"#0073ea", icon:"🚀" },
+                    { label:"Término", value:fmtShort(fimAval), sub:"2026", color:"#00c875", icon:"🏁" },
+                  ].map(c => (
+                    <div key={c.label} style={{ background:"#fff", borderRadius:14, padding:"14px 16px", boxShadow:"0 2px 10px rgba(0,0,0,0.07)", borderLeft:`4px solid ${c.color}`, flex:1, minWidth:120 }}>
+                      <div style={{ fontSize:10, color:"#999", marginBottom:2 }}>{c.icon} {c.label}</div>
+                      <div style={{ fontSize:20, fontWeight:800, color:c.color }}>{c.value}</div>
+                      <div style={{ fontSize:10, color:"#bbb" }}>{c.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
+                  <div style={{ fontWeight:700, fontSize:14, marginBottom:14, color:"#1f1f1f" }}>📋 Como funciona a Avaliação</div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                    <div style={{ background:"#fff8ec", borderRadius:10, padding:"14px 16px", border:"1px solid #ffe08a" }}>
+                      <div style={{ fontWeight:700, fontSize:13, color:"#b8860b", marginBottom:6 }}>⚙️ Lógica de sequência</div>
+                      <div style={{ fontSize:12, color:"#555", lineHeight:1.7 }}>
+                        Cada projeto passa por <b>3 dias úteis de avaliação</b> após sua vistoria ser concluída.<br/>
+                        A fase de avaliação começa no 1º dia útil após o fim da vistoria ({fmtShort(AVAL_START)}) e termina em {fmtShort(fimAval)}.<br/>
+                        Projetos vistoriados mais cedo entram em avaliação mais cedo (processo contínuo).
+                      </div>
+                    </div>
+                    <div style={{ background:"#f0f7ff", borderRadius:10, padding:"14px 16px", border:"1px solid #c5dcff" }}>
+                      <div style={{ fontWeight:700, fontSize:13, color:"#0073ea", marginBottom:10 }}>📅 Linha do tempo da Avaliação</div>
+                      {diasAval.map((d, i) => (
+                        <div key={i} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:8, padding:"8px 12px", background:"#fff", borderRadius:8, border:"1px solid #e8f0fe" }}>
+                          <div style={{ width:28, height:28, borderRadius:"50%", background:"#fdab3d", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:12, flexShrink:0 }}>{i+1}</div>
+                          <div>
+                            <div style={{ fontSize:12, fontWeight:700, color:"#333" }}>Dia {i+1} — {d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"2-digit"})}</div>
+                            <div style={{ fontSize:11, color:"#888" }}>Avaliação dos projetos vistoriados {AVAL_DIAS-(i)} dias antes</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 </div>}
 
               </div>
