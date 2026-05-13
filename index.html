@@ -234,87 +234,123 @@
     // ─── GANTT TRIFÁSICO POR SEMANA ──────────────────────────────────────────────
     function GanttUnificado() {
       const HOJE_G = new Date("2026-05-13");
-      const gIni = CRON_START;
-      const gFim = fimAval;
+      const gIni = CRON_START, gFim = fimAval;
       const spanMs = gFim - gIni;
-      const pct = d => Math.max(0,(d-gIni)/spanMs*100);
-      const W = 1/((gFim-gIni)/(1000*60*60*24))*100;
+      // pct: posição % na linha do tempo global
+      const pct = d => Math.max(0, Math.min(100, (d - gIni) / spanMs * 100));
+      const pctW = (a, b) => Math.max(0.3, pct(b) - pct(a) + 1/((gFim-gIni)/(1000*60*60*24))*100);
 
-      // Cabeçalho de meses
-      const allDG=[]; const cc=new Date(gIni);
-      while(cc<=gFim){allDG.push(new Date(cc));cc.setDate(cc.getDate()+1);}
-      const meses2=[];
-      allDG.forEach(d=>{
-        const key=`${d.getFullYear()}-${d.getMonth()}`;
-        if(!meses2.length||meses2[meses2.length-1].key!==key)
-          meses2.push({key,label:d.toLocaleDateString("pt-BR",{month:"short"}),count:1});
+      // Dados das 3 fases
+      const fasesCfg = [
+        { key:"proj", color:"#0073ea", label:"Elaboração",
+          inicio:CRON_START, fim:fimProj, semanas:semanasProj,
+          getTot:s=>s.dias.reduce((a,d)=>a+d.total,0), fmt:n=>`${n} clusters` },
+        { key:"vist", color:"#00c875", label:"Vistoria",
+          inicio:VIST_START, fim:fimVist, semanas:semanasVist,
+          getTot:s=>s.dias.reduce((a,d)=>a+d.projsDia.length,0), fmt:n=>`${n} vistorias` },
+        { key:"aval", color:"#fdab3d", label:"Avaliação",
+          inicio:AVAL_START, fim:fimAval, semanas:semanasAval,
+          getTot:s=>s.dias.reduce((a,d)=>a+d.projsDia.length,0), fmt:n=>`${n} avaliações` },
+      ];
+
+      // Unir semanas de todas as fases
+      const semMap = {};
+      fasesCfg.forEach(fc => {
+        fc.semanas.forEach(s => {
+          const k = s.inicio.toISOString().split("T")[0];
+          if (!semMap[k]) semMap[k] = { ini: s.inicio, fim: s.dias[s.dias.length-1].dia, fases: {} };
+          semMap[k].fases[fc.key] = s;
+        });
+      });
+      const semanas3 = Object.values(semMap).sort((a,b) => a.ini - b.ini);
+
+      // Cabeçalho meses
+      const allDG = []; const cc = new Date(gIni);
+      while (cc <= gFim) { allDG.push(new Date(cc)); cc.setDate(cc.getDate()+1); }
+      const meses2 = [];
+      allDG.forEach(d => {
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (!meses2.length || meses2[meses2.length-1].key !== key)
+          meses2.push({ key, label: d.toLocaleDateString("pt-BR",{month:"short"}), count: 1 });
         else meses2[meses2.length-1].count++;
       });
 
-      // Unir todas as semanas num único calendário
-      const semMap={};
-      const addSem=(sems,fase)=>{
-        sems.forEach(s=>{
-          const k=s.inicio?s.inicio.toISOString().split("T")[0]:s.dias[0].dia.toISOString().split("T")[0];
-          if(!semMap[k]) semMap[k]={ini:s.dias[0].dia, fim:s.dias[s.dias.length-1].dia, fases:{}};
-          semMap[k].fases[fase]=s;
-        });
-      };
-      addSem(semanasProj,"proj");
-      addSem(semanasVist,"vist");
-      addSem(semanasAval,"aval");
-      const semanas3 = Object.values(semMap).sort((a,b)=>a.ini-b.ini);
-
-      const fasesCfg = [
-        {key:"proj", color:"#0073ea", label:"Elaboração",
-         getTot:s=>s.dias.reduce((a,d)=>a+d.total,0), fmt:n=>`${n} clusters`},
-        {key:"vist", color:"#00c875", label:"Vistoria",
-         getTot:s=>s.dias.reduce((a,d)=>a+d.projsDia.length,0), fmt:n=>`${n} vistorias`},
-        {key:"aval", color:"#fdab3d", label:"Avaliação",
-         getTot:s=>s.dias.reduce((a,d)=>a+d.projsDia.length,0), fmt:n=>`${n} avaliações`},
-      ];
-
-      const hoje2Vis = HOJE_G>=gIni&&HOJE_G<=gFim;
-      const hoje2Left = pct(HOJE_G);
+      const hoje2Vis = HOJE_G >= gIni && HOJE_G <= gFim;
+      const fmtD = d => d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
 
       return (
         <div style={{background:"#fff",borderRadius:14,padding:20,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginBottom:16,overflowX:"auto"}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:14,color:"#1f1f1f"}}>📊 Cronograma Geral — 3 Fases em Paralelo</div>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:4,color:"#1f1f1f"}}>📊 Cronograma Geral — 3 Fases em Paralelo</div>
+          {/* Resumo de datas */}
+          <div style={{display:"flex",gap:16,marginBottom:14,flexWrap:"wrap"}}>
+            {fasesCfg.map((fc,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:12,height:12,borderRadius:3,background:fc.color,flexShrink:0}}/>
+                <span style={{fontSize:11,fontWeight:700,color:fc.color}}>{fc.label}:</span>
+                <span style={{fontSize:11,color:"#555"}}>{fmtD(fc.inicio)} → {fmtD(fc.fim)}</span>
+              </div>
+            ))}
+          </div>
           <div style={{minWidth:580}}>
-            {/* Meses */}
-            <div style={{display:"flex",marginLeft:124,marginBottom:4}}>
+            {/* Cabeçalho meses */}
+            <div style={{display:"flex",marginLeft:116,marginBottom:4}}>
               {meses2.map((m,i)=>(
-                <div key={i} style={{width:`${(m.count/allDG.length)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #e0e0e0",paddingLeft:2}}>
+                <div key={i} style={{width:`${(m.count/allDG.length)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #ddd",paddingLeft:2}}>
                   {m.label.toUpperCase()}
                 </div>
               ))}
             </div>
-            {/* Linhas de semana por fase */}
+            {/* Linhas por semana */}
             {semanas3.map((sem,si)=>{
-              const left = pct(sem.ini);
-              const wid  = Math.max(0.5, pct(sem.fim)-left+W);
-              const label= `Sem. ${si+1}`;
-              const datas= `${sem.ini.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}–${sem.fim.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`;
+              const ativas = fasesCfg.filter(fc => sem.fases[fc.key]);
+              const rowH = ativas.length * 22 + 8;
               return (
-                <div key={si} style={{display:"flex",alignItems:"center",marginBottom:6}}>
-                  {/* Label semana */}
-                  <div style={{width:124,flexShrink:0,textAlign:"right",paddingRight:10,fontSize:11,color:"#555",fontWeight:600}}>
-                    {label}
-                    <div style={{fontSize:9,color:"#bbb",fontWeight:400}}>{datas}</div>
+                <div key={si} style={{display:"flex",alignItems:"flex-start",marginBottom:4}}>
+                  {/* Label */}
+                  <div style={{width:116,flexShrink:0,textAlign:"right",paddingRight:10,fontSize:11,color:"#555",fontWeight:700,paddingTop:6}}>
+                    Sem. {si+1}
+                    <div style={{fontSize:9,color:"#bbb",fontWeight:400}}>
+                      {fmtD(sem.ini)}–{fmtD(sem.fim)}
+                    </div>
                   </div>
-                  {/* Área de barras */}
-                  <div style={{flex:1,position:"relative",height:fasesCfg.filter(f=>sem.fases[f.key]).length*22+8,background:"#f8f9fb",borderRadius:6}}>
+                  {/* Área */}
+                  <div style={{flex:1,position:"relative",height:rowH,background:"#f8f9fb",borderRadius:6}}>
+                    {/* Grade vertical de semanas */}
+                    {allDG.filter(d=>d.getDay()===1).map((d,j)=>(
+                      <div key={j} style={{position:"absolute",left:`${pct(d)}%`,top:0,width:1,height:"100%",background:"#e8e8e8",zIndex:1}}/>
+                    ))}
                     {/* Hoje */}
-                    {hoje2Vis&&<div style={{position:"absolute",left:`${hoje2Left}%`,top:-4,width:2,height:"calc(100% + 8px)",background:"#e2445c",zIndex:6}}/>}
-                    {/* Barras das fases ativas nessa semana, empilhadas verticalmente */}
+                    {hoje2Vis&&(
+                      <div style={{position:"absolute",left:`${pct(HOJE_G)}%`,top:-4,width:2,height:rowH+8,background:"#e2445c",zIndex:7}}>
+                        <div style={{position:"absolute",top:-12,left:-10,fontSize:9,color:"#e2445c",fontWeight:800,background:"#fff",padding:"1px 4px",borderRadius:3,border:"1px solid #e2445c",whiteSpace:"nowrap"}}>hoje</div>
+                      </div>
+                    )}
+                    {/* Barras: cada fase posicionada na sua data REAL */}
                     {fasesCfg.map((fc,fi)=>{
-                      const s=sem.fases[fc.key];
-                      if(!s) return null;
-                      const tot=fc.getTot(s);
-                      if(tot===0) return null;
+                      const s = sem.fases[fc.key];
+                      if (!s) return null;
+                      const tot = fc.getTot(s);
+                      if (tot === 0) return null;
+                      // Posição real: início da fase ou início da semana, o que vier depois
+                      const barIni = new Date(Math.max(fc.inicio.getTime(), sem.ini.getTime()));
+                      const barFim = new Date(Math.min(fc.fim.getTime(), sem.fim.getTime() + 86400000));
+                      const left   = pct(barIni);
+                      const wid    = pctW(barIni, barFim);
+                      const isFirst = si === 0 || !semanas3[si-1].fases[fc.key];
+                      const isLast  = si === semanas3.length-1 || !semanas3[si+1].fases[fc.key];
+                      const topIdx  = fasesCfg.filter((f,i)=>i<=fi&&sem.fases[f.key]).length - 1;
                       return (
-                        <div key={fi} style={{position:"absolute",left:`${left}%`,width:`${wid}%`,top:fi*(22)+4,height:18,background:fc.color,borderRadius:5,display:"flex",alignItems:"center",paddingLeft:6,zIndex:3,opacity:0.88,boxShadow:`0 1px 3px ${fc.color}44`}}>
-                          <span style={{fontSize:10,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{fc.fmt(tot)}</span>
+                        <div key={fi} style={{position:"absolute",left:`${left}%`,width:`${wid}%`,top:topIdx*22+4,height:18,background:fc.color,borderRadius:5,display:"flex",alignItems:"center",paddingLeft:6,paddingRight:4,zIndex:3,opacity:0.9,boxShadow:`0 1px 4px ${fc.color}44`,overflow:"hidden"}}>
+                          <span style={{fontSize:10,fontWeight:700,color:"#fff",whiteSpace:"nowrap",flex:1}}>
+                            {isFirst && <span style={{marginRight:4,fontSize:9,opacity:0.85}}>▶</span>}
+                            {fc.fmt(tot)}
+                            {isLast && <span style={{marginLeft:4,fontSize:9,opacity:0.85}}>■</span>}
+                          </span>
+                          {(isFirst || isLast) && (
+                            <span style={{fontSize:9,color:"rgba(255,255,255,0.85)",whiteSpace:"nowrap",flexShrink:0}}>
+                              {isFirst ? fmtD(fc.inicio) : fmtD(fc.fim)}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
@@ -323,9 +359,10 @@
               );
             })}
             {/* Legenda */}
-            <div style={{display:"flex",gap:16,marginLeft:134,marginTop:10,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
-              {fasesCfg.map((f,i)=><span key={i}><span style={{display:"inline-block",width:12,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.88}}/>{f.label}</span>)}
+            <div style={{display:"flex",gap:16,marginLeft:126,marginTop:10,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
+              {fasesCfg.map((f,i)=><span key={i}><span style={{display:"inline-block",width:12,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.9}}/>{f.label}</span>)}
               <span><span style={{display:"inline-block",width:2,height:10,background:"#e2445c",marginRight:4}}/>Hoje</span>
+              <span style={{color:"#aaa"}}>▶ início da fase &nbsp; ■ fim da fase</span>
             </div>
           </div>
         </div>
