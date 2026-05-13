@@ -200,8 +200,9 @@
     const semanasProj = agruparSemanas(allDiasProj);
 
     // ─── CRONOGRAMA VISTORIA ──────────────────────────────────────────────────────
+    // Vistoria só começa após o fim da elaboração dos projetos
     const VIST_POR_DIA = 6;
-    const VIST_START = new Date("2026-04-08");
+    const VIST_START = (() => { const d = new Date(fimProj); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6||FERIADOS_VIST.includes(d.toISOString().split("T")[0])) d.setDate(d.getDate()+1); return d; })();
     // Derivar listaVist ANTES de TOTAL_VISTORIA para que o total reflita os dados reais
     const jaAguardando = projetos.filter(p => p.status === "Aguardando vistoria");
     const listaVist = [
@@ -333,6 +334,7 @@
       const [modulo, setModulo] = useState("dashboard");
       const [tab, setTab] = useState("overview");
       const [cronTab, setCronTab] = useState("gantt");
+      const [cronSec, setCronSec] = useState("projetos");
       const [vistTab, setVistTab] = useState("gantt");
       const [semSel, setSemSel] = useState(-1);
       const [semVSel, setSemVSel] = useState(-1);
@@ -363,7 +365,7 @@
           {/* Nav */}
           <div style={{ background:"#1f1f2e", padding:"0 20px", display:"flex", alignItems:"center", gap:4, height:52, boxShadow:"0 2px 8px rgba(0,0,0,0.2)" }}>
             <div style={{ color:"#fff", fontWeight:800, fontSize:14, marginRight:20 }}>📡 Migração Rádio</div>
-            {[["dashboard","📡 Dashboard"],["porprojeto","📋 Por Projeto"],["cronograma","📅 Proj. Clusters"],["vistoria","🔍 Vistoria"]].map(([m,l]) => (
+            {[["dashboard","📡 Dashboard"],["porprojeto","📋 Por Projeto"],["cronograma","📅 Cronograma"]].map(([m,l]) => (
               <button key={m} onClick={() => setModulo(m)} style={{ padding:"6px 16px", borderRadius:8, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:modulo===m?"#0073ea":"transparent", color:modulo===m?"#fff":"#aaa" }}>{l}</button>
             ))}
           </div>
@@ -872,13 +874,40 @@
               );
             })()}
 
-            {/* ══ CRONOGRAMA PROJETOS ══ */}
+            {/* ══ CRONOGRAMA ══ */}
             {modulo === "cronograma" && (
               <div>
                 <div style={{ marginBottom:16 }}>
-                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma de Projetos</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{totalAProjetar} clusters · {PROJETISTAS.length} projetistas · {CLUSTERS_POR_PROJETISTA_DIA}/dia cada · {fmtShort(CRON_START)} → {fmtShort(fimProj)}/2026</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>Elaboração de projetos + vistorias em sequência</div>
                 </div>
+                {/* Seletor de seção */}
+                <div style={{ display:"flex", gap:8, marginBottom:20 }}>
+                  {[["projetos","🏗️ Elaboração de Projetos"],["vistoria","🔍 Vistoria"]].map(([sec,lbl]) => (
+                    <button key={sec} onClick={() => setCronSec(sec)} style={{ padding:"9px 22px", borderRadius:10, border:"none", cursor:"pointer", fontWeight:700, fontSize:13, background:cronSec===sec?"#0073ea":"#fff", color:cronSec===sec?"#fff":"#555", boxShadow:"0 2px 8px rgba(0,0,0,0.08)", display:"flex", alignItems:"center", gap:8 }}>
+                      {lbl}
+                      {sec==="projetos" && <span style={{ background:cronSec===sec?"rgba(255,255,255,0.25)":"#e8f0fe", color:cronSec===sec?"#fff":"#0073ea", borderRadius:20, padding:"1px 8px", fontSize:11, fontWeight:700 }}>{totalAProjetar} clusters</span>}
+                      {sec==="vistoria" && <span style={{ background:cronSec===sec?"rgba(255,255,255,0.25)":"#e8f5e9", color:cronSec===sec?"#fff":"#00c875", borderRadius:20, padding:"1px 8px", fontSize:11, fontWeight:700 }}>{TOTAL_VISTORIA} vistorias</span>}
+                    </button>
+                  ))}
+                </div>
+                {/* Linha do tempo geral */}
+                <div style={{ background:"#fff", borderRadius:12, padding:"12px 18px", marginBottom:18, boxShadow:"0 2px 8px rgba(0,0,0,0.05)", display:"flex", alignItems:"center", gap:0, overflowX:"auto" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                    <div style={{ width:12, height:12, borderRadius:"50%", background:"#0073ea" }} />
+                    <span style={{ fontSize:12, color:"#555", fontWeight:600 }}>🏗️ Elaboração</span>
+                    <span style={{ fontSize:11, color:"#0073ea", fontWeight:700 }}>{fmtShort(CRON_START)} → {fmtShort(fimProj)}</span>
+                  </div>
+                  <div style={{ flex:1, height:3, background:"linear-gradient(to right, #0073ea, #00c875)", margin:"0 12px", minWidth:40, borderRadius:2 }} />
+                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                    <div style={{ width:12, height:12, borderRadius:"50%", background:"#00c875" }} />
+                    <span style={{ fontSize:12, color:"#555", fontWeight:600 }}>🔍 Vistoria</span>
+                    <span style={{ fontSize:11, color:"#00c875", fontWeight:700 }}>{fmtShort(VIST_START)} → {fmtShort(fimVist)}</span>
+                  </div>
+                </div>
+
+                {/* ── SEÇÃO ELABORAÇÃO ── */}
+                {cronSec === "projetos" && <div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                   {[
                     { label:"A projetar", value:String(totalAProjetar), sub:`${totalPendente} pend. + ${totalEmDesenv} desenv.`, color:"#e2445c", icon:"⏳" },
@@ -1016,14 +1045,13 @@
                   </div>
                 )}
               </div>
-            )}
+                </div>}
 
-            {/* ══ CRONOGRAMA VISTORIA ══ */}
-            {modulo === "vistoria" && (
-              <div>
+                {/* ── SEÇÃO VISTORIA ── */}
+                {cronSec === "vistoria" && <div>
                 <div style={{ marginBottom:16 }}>
-                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Cronograma de Vistorias</div>
-                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_VISTORIA} projetos · 6/dia · {fmtShort(VIST_START)} → {fmtShort(fimVist)}/2026</div>
+                  <div style={{ fontSize:16, fontWeight:800, color:"#1f1f1f" }}>🔍 Cronograma de Vistorias</div>
+                  <div style={{ fontSize:12, color:"#888", marginTop:2 }}>Início após elaboração · {TOTAL_VISTORIA} projetos · 6/dia · {fmtShort(VIST_START)} → {fmtShort(fimVist)}</div>
                 </div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                   {[
@@ -1124,6 +1152,9 @@
                     </table>
                   </div>
                 )}
+              </div>
+                </div>}
+
               </div>
             )}
 
