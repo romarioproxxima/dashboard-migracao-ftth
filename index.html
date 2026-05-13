@@ -231,91 +231,93 @@
       projsDia: listaVist.slice(i*VIST_POR_DIA, (i+1)*VIST_POR_DIA)
     })));
 
-    // ─── GANTT TRIFÁSICO ─────────────────────────────────────────────────────────
+    // ─── GANTT TRIFÁSICO (barras horizontais por fase) ───────────────────────────
     function GanttUnificado() {
       const HOJE_G = new Date("2026-05-13");
-      // 3 fases com seus dados semanais
+      // Cada fase: início, fim e cor distintos
       const fases = [
-        { label:"🏗️ Elaboração", color:"#0073ea", inicio:CRON_START, fim:fimProj, semanas:semanasProj,
-          getTot: s => s.dias.reduce((a,d)=>a+d.total,0), getFmt: n=>`${n} clusters` },
-        { label:"🔍 Vistoria",   color:"#00c875", inicio:VIST_START, fim:fimVist, semanas:semanasVist,
-          getTot: s => s.dias.reduce((a,d)=>a+d.projsDia.length,0), getFmt: n=>`${n} vistorias` },
-        { label:"📋 Avaliação",  color:"#fdab3d", inicio:AVAL_START, fim:fimAval, semanas:semanasAval,
-          getTot: s => s.dias.reduce((a,d)=>a+d.projsDia.length,0), getFmt: n=>`${n} avaliações` },
+        { label:"🏗️ Elaboração", color:"#0073ea", inicio:CRON_START, fim:fimProj,
+          detail:`${totalAProjetar} clusters · ${CAPACIDADE_DIA}/dia · ${PROJETISTAS.length} projetistas` },
+        { label:"🔍 Vistoria",   color:"#00c875", inicio:VIST_START, fim:fimVist,
+          detail:`${TOTAL_VISTORIA} projetos · ${VIST_POR_DIA}/dia` },
+        { label:"📋 Avaliação",  color:"#fdab3d", inicio:AVAL_START, fim:fimAval,
+          detail:`${AVAL_DIAS} dias por projeto após vistoria` },
       ];
-
-      const gIni = CRON_START, gFim = fimAval;
-      const totalD = Math.ceil((gFim - gIni)/(1000*60*60*24)) + 1;
-      const allDG = []; const c2 = new Date(gIni);
-      while(c2 <= gFim){ allDG.push(new Date(c2)); c2.setDate(c2.getDate()+1); }
+      const gIni = CRON_START;
+      const gFim = fimAval;
+      const spanMs = gFim - gIni;
+      const pct = d => Math.max(0, (d - gIni) / spanMs * 100);
+      const pctW = (a,b) => Math.max(0.5, (b - a) / spanMs * 100);
+      // Meses para o cabeçalho
+      const allDays2 = []; const cc = new Date(gIni);
+      while(cc <= gFim){ allDays2.push(new Date(cc)); cc.setDate(cc.getDate()+1); }
       const meses2 = [];
-      allDG.forEach(d => {
+      allDays2.forEach(d => {
         const key = `${d.getFullYear()}-${d.getMonth()}`;
         if(!meses2.length || meses2[meses2.length-1].key!==key)
-          meses2.push({key, label:d.toLocaleDateString("pt-BR",{month:"short"}), count:1});
+          meses2.push({key,label:d.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}),count:1});
         else meses2[meses2.length-1].count++;
       });
-      const pct = d => Math.max(0, Math.ceil((d-gIni)/(1000*60*60*24))/totalD*100);
-      const W = 100/totalD;
-      const hoje2Left = pct(HOJE_G);
       const hoje2Vis = HOJE_G >= gIni && HOJE_G <= gFim;
-
+      const hoje2Left = pct(HOJE_G);
+      // Semanas para grid vertical
+      const semLines = allDays2.filter(d=>d.getDay()===1).map(d=>pct(d));
       return (
         <div style={{background:"#fff",borderRadius:14,padding:20,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginBottom:16,overflowX:"auto"}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:14,color:"#1f1f1f"}}>📊 Cronograma Geral — 3 Fases em Paralelo</div>
-          <div style={{minWidth:600}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14,color:"#1f1f1f"}}>📊 Cronograma Geral — Visão de Barras</div>
+          <div style={{minWidth:560}}>
             {/* Cabeçalho de meses */}
-            <div style={{display:"flex",marginLeft:156,marginBottom:4}}>
+            <div style={{display:"flex",marginLeft:170,marginBottom:4}}>
               {meses2.map((m,i)=>(
-                <div key={i} style={{width:`${(m.count/totalD)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #e8e8e8",paddingLeft:2}}>
+                <div key={i} style={{width:`${(m.count/allDays2.length)*100}%`,fontSize:10,fontWeight:700,color:"#0073ea",textAlign:"center",borderLeft:"1px solid #ddd",paddingLeft:2}}>
                   {m.label.toUpperCase()}
                 </div>
               ))}
             </div>
-
-            {/* Uma linha por fase */}
+            {/* Fases */}
             {fases.map((fase,fi)=>{
-              const sems = fase.semanas;
-              const acums = sems.map((_,i)=>sems.slice(0,i+1).reduce((a,s)=>a+fase.getTot(s),0));
-              const totalFase = acums[acums.length-1]||0;
+              const left  = pct(fase.inicio);
+              const width = pctW(fase.inicio, fase.fim);
+              const dias  = Math.ceil((fase.fim - fase.inicio)/(1000*60*60*24));
+              const semanasCount = Math.ceil(dias/7);
               return (
-                <div key={fi} style={{display:"flex",alignItems:"flex-start",marginBottom:10}}>
+                <div key={fi} style={{display:"flex",alignItems:"center",marginBottom:18}}>
                   {/* Label */}
-                  <div style={{width:156,flexShrink:0,paddingRight:10,textAlign:"right"}}>
-                    <div style={{fontSize:12,fontWeight:700,color:fase.color}}>{fase.label}</div>
-                    <div style={{fontSize:9,color:"#bbb"}}>{fmtShort(fase.inicio)}–{fmtShort(fase.fim)}</div>
+                  <div style={{width:170,flexShrink:0,textAlign:"right",paddingRight:14,borderRight:`3px solid ${fase.color}`}}>
+                    <div style={{fontSize:13,fontWeight:800,color:fase.color}}>{fase.label}</div>
+                    <div style={{fontSize:10,color:"#888",marginTop:2}}>{fmtShort(fase.inicio)} → {fmtShort(fase.fim)}</div>
+                    <div style={{fontSize:10,color:"#aaa"}}>{semanasCount} semanas · {dias} dias</div>
                   </div>
-                  {/* Timeline row */}
-                  <div style={{flex:1,position:"relative",height:30,background:"#f5f6f8",borderRadius:6}}>
-                    {/* Linha de grade */}
-                    {allDG.filter(d=>d.getDay()===1).map((d,j)=>(
-                      <div key={j} style={{position:"absolute",left:`${pct(d)}%`,top:0,width:1,height:"100%",background:"#e8e8e8"}}/>
+                  {/* Container da barra */}
+                  <div style={{flex:1,position:"relative",height:42,background:"#f5f6f8",borderRadius:8,marginLeft:10}}>
+                    {/* Linhas de semana */}
+                    {semLines.map((l,j)=>(
+                      <div key={j} style={{position:"absolute",left:`${l}%`,top:0,width:1,height:"100%",background:"#e0e0e0",zIndex:1}}/>
                     ))}
-                    {/* Hoje */}
-                    {hoje2Vis && <div style={{position:"absolute",left:`${hoje2Left}%`,top:0,width:2,height:"100%",background:"#e2445c",zIndex:5}}/>}
-                    {/* Barras semanais */}
-                    {sems.map((s,si)=>{
-                      const dIni = s.dias[0].dia;
-                      const dFim = s.dias[s.dias.length-1].dia;
-                      const left = pct(dIni);
-                      const width = Math.max(0.5, pct(dFim)-left+(W));
-                      const tot = fase.getTot(s);
-                      if(tot===0) return null;
-                      return (
-                        <div key={si} style={{position:"absolute",left:`${left}%`,width:`${width}%`,top:3,height:24,background:fase.color,borderRadius:5,display:"flex",alignItems:"center",paddingLeft:6,zIndex:3,opacity:0.88,boxShadow:`0 1px 4px ${fase.color}44`}}>
-                          <span style={{fontSize:10,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{fase.getFmt(tot)}</span>
-                        </div>
-                      );
-                    })}
+                    {/* Marcador hoje */}
+                    {hoje2Vis && (
+                      <div style={{position:"absolute",left:`${hoje2Left}%`,top:-8,width:2,height:58,background:"#e2445c",zIndex:6}}>
+                        <div style={{position:"absolute",top:-13,left:-10,fontSize:9,color:"#e2445c",fontWeight:700,background:"#fff",padding:"1px 4px",borderRadius:3,border:"1px solid #e2445c",whiteSpace:"nowrap"}}>hoje</div>
+                      </div>
+                    )}
+                    {/* Barra da fase */}
+                    <div style={{position:"absolute",left:`${left}%`,width:`${width}%`,top:4,height:34,background:fase.color,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 12px",zIndex:4,opacity:0.92,boxShadow:`0 3px 8px ${fase.color}55`,overflow:"hidden"}}>
+                      <span style={{fontSize:11,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{fase.detail}</span>
+                      <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.8)",whiteSpace:"nowrap",marginLeft:8}}>{dias}d</span>
+                    </div>
+                    {/* Marcador de início */}
+                    <div style={{position:"absolute",left:`${left}%`,top:-2,width:2,height:46,background:fase.color,zIndex:5,opacity:0.5}}/>
+                    {/* Marcador de fim */}
+                    <div style={{position:"absolute",left:`${left+width}%`,top:-2,width:2,height:46,background:fase.color,zIndex:5,opacity:0.5}}/>
                   </div>
                 </div>
               );
             })}
-
             {/* Legenda */}
-            <div style={{display:"flex",gap:16,marginLeft:166,marginTop:8,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
-              {fases.map((f,i)=><span key={i}><span style={{display:"inline-block",width:12,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.88}}/>{f.label.replace(/^[^\s]+\s/,"")}</span>)}
+            <div style={{display:"flex",gap:20,marginLeft:184,marginTop:4,fontSize:10,color:"#888",flexWrap:"wrap",alignItems:"center"}}>
+              {fases.map((f,i)=><span key={i}><span style={{display:"inline-block",width:14,height:10,background:f.color,borderRadius:2,marginRight:4,opacity:0.9}}/>{f.label.replace(/^[^\s]+\s/,"")}</span>)}
               <span><span style={{display:"inline-block",width:2,height:10,background:"#e2445c",marginRight:4}}/>Hoje</span>
+              <span><span style={{display:"inline-block",width:1,height:10,background:"#ccc",marginRight:4}}/>Semana</span>
             </div>
           </div>
         </div>
