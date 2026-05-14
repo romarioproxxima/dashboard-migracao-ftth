@@ -586,6 +586,10 @@
       const [search, setSearch] = useState("");
       const [fStatus, setFStatus] = useState("all");
       const [fStatusAjust, setFStatusAjust] = useState("all");
+      const [liveAjustados, setLiveAjustados] = useState(null);
+      const [loadingAjust, setLoadingAjust] = useState(false);
+      const [ajustMsg, setAjustMsg] = useState("");
+      const [ajustLastUpdate, setAjustLastUpdate] = useState(null);
 
       const filtered = projetos.filter(p => {
         const ms = !search || p.nome.toLowerCase().includes(search.toLowerCase()) || p.projetista.toLowerCase().includes(search.toLowerCase()) || p.cidade.toLowerCase().includes(search.toLowerCase());
@@ -598,6 +602,50 @@
         if (!porProj[k]) porProj[k] = { count:0, clusters:0, valor:0, clientes:0 };
         porProj[k].count++; porProj[k].clusters += p.qtdClusters; porProj[k].valor += p.valor; porProj[k].clientes += p.clientesPlanilha;
       });
+
+      // ─── FETCH MONDAY API ────────────────────────────────────────────────────────
+      const fetchAjustados = async () => {
+        setLoadingAjust(true); setAjustMsg("");
+        try {
+          const q = `query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:["numeric_mm0fhmyb","numeric_mm0a5pkz","numeric_mm0fzxsd"]){ id text } } } } }`;
+          const res = await fetch("https://api.monday.com/v2", {
+            method:"POST",
+            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
+            body:JSON.stringify({query:q})
+          });
+          const data = await res.json();
+          if (!data.data) throw new Error(data.errors?.[0]?.message || "Erro na API");
+          const items = data.data.boards[0].items_page.items;
+          const newMap = {};
+          const updates = [];
+          items.forEach(item => {
+            const vals = {};
+            item.column_values.forEach(cv => { vals[cv.id] = parseFloat(cv.text)||0; });
+            const cabos = vals["numeric_mm0a5pkz"]||0;
+            const postes = vals["numeric_mm0fzxsd"]||0;
+            const valor = vals["numeric_mm0fhmyb"]||0;
+            if (valor > 0) {
+              const ajustado = Math.round((valor-(cabos*2.03)-(postes*100))*100)/100;
+              newMap[item.name] = {cabos,postes,ajustado};
+              updates.push({id:item.id, ajustado});
+            }
+          });
+          setLiveAjustados(newMap);
+          // Atualizar coluna no Monday
+          let ok=0;
+          for (const upd of updates) {
+            const m = `mutation { change_column_value(board_id:18399019664, item_id:${upd.id}, column_id:"numeric_mm3bhenr", value:"${upd.ajustado}") { id } }`;
+            const r2 = await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},body:JSON.stringify({query:m})});
+            const d2 = await r2.json();
+            if (d2.data) ok++;
+          }
+          setAjustLastUpdate(new Date().toLocaleString("pt-BR"));
+          setAjustMsg(`✅ ${ok} projetos atualizados com dados de ${new Date().toLocaleString("pt-BR")}`);
+        } catch(e) {
+          setAjustMsg("❌ Erro: "+e.message);
+        }
+        setLoadingAjust(false);
+      };
 
       const tabBtn = (val, cur, set, label) => (
         <button key={val} onClick={() => set(val)} style={{ padding:"7px 16px", borderRadius:20, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:cur===val?"#0073ea":"#fff", color:cur===val?"#fff":"#555", boxShadow:"0 1px 4px rgba(0,0,0,0.08)" }}>{label}</button>
@@ -800,8 +848,9 @@
 
                 {tab === "valorajustado" && (() => {
                   // Enriquecer projetos com dados ajustados
+                  const srcAjust = liveAjustados || AJUSTADOS;
                   const projAjustAll = projetos.map(p => {
-                    const d = AJUSTADOS[p.nome];
+                    const d = srcAjust[p.nome];
                     if (!d) return null;
                     const deducCabo = d.cabos * 2.03;
                     const deducPoste = d.postes * 100;
@@ -826,6 +875,29 @@
                           Sem mão de obra · Sem valor do projeto de postes · Implantação de postes a R$200 (era R$300)
                         </div>
                       </div>
+
+                      {/* Botão Atualizar */}
+                      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+                        <button onClick={fetchAjustados} disabled={loadingAjust}
+                          style={{display:"flex",alignItems:"center",gap:8,padding:"10px 20px",borderRadius:10,border:"none",
+                            background:loadingAjust?"#aaa":"#0073ea",color:"#fff",fontWeight:700,fontSize:13,
+                            cursor:loadingAjust?"not-allowed":"pointer",boxShadow:"0 2px 8px rgba(0,115,234,0.3)"}}>
+                          {loadingAjust
+                            ? <><span style={{display:"inline-block",width:14,height:14,border:"2px solid #fff",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}></span> Atualizando...</>
+                            : <><span style={{fontSize:16}}>🔄</span> Atualizar do Monday</>}
+                        </button>
+                        {ajustLastUpdate && !ajustMsg.startsWith("❌") && (
+                          <span style={{fontSize:11,color:"#00c875",fontWeight:600}}>
+                            {liveAjustados?"🟢 Dados ao vivo":"📋 Dados fixos"} · Última atualização: {ajustLastUpdate}
+                          </span>
+                        )}
+                        {ajustMsg && (
+                          <span style={{fontSize:11,fontWeight:600,color:ajustMsg.startsWith("✅")?"#00c875":"#e2445c"}}>
+                            {ajustMsg}
+                          </span>
+                        )}
+                      </div>
+                      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
                       {/* Filtro por status */}
                       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
