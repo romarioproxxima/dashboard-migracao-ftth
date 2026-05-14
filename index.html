@@ -129,6 +129,97 @@
       { status:"Reprovado", color:"#c0392b" },
     ];
     const statusColorMap = Object.fromEntries(PIPELINE.map(p => [p.status, p.color]));
+
+    // ─── VALOR AJUSTADO ───────────────────────────────────────────────────────────
+    const AJUSTADOS = {
+      "Expansão Cluster 84, 382 - São Bento do Una - PE": {cabos:20657,postes:22,ajustado:78830.84},
+      "Projetado Clusters 5, 32, 112 e 210 - Caldeirão Grande - BA": {cabos:22960,postes:61,ajustado:83140.53},
+      "Expansão Cluster 292 - Senhor do Bonfim - BA": {cabos:8606,postes:36,ajustado:46777.82},
+      "Expansão Cluster 452 - Jacobina - BA": {cabos:4360,postes:0,ajustado:10490.83},
+      "Expansão Cluster 49 - Cansanção - BA": {cabos:10533,postes:84,ajustado:67496.74},
+      "Expansão Cluster 214 e 235 - Queimadas - BA": {cabos:11732,postes:92,ajustado:71206.18},
+      "Expansão Cluster 37 - Caldeirão Grande - BA": {cabos:5640,postes:1,ajustado:27028.87},
+      "Expansão Cluster 19 - Caém - BA": {cabos:10650,postes:18,ajustado:45644.7},
+      "Expansão Cluster 252 - São João do Rio do Peixe - PB": {cabos:12336,postes:75,ajustado:63845.93},
+      "Expansão Cluster 395 - Picuí - PB": {cabos:8150,postes:0,ajustado:19756.04},
+      "Expansão Cluster 397 - Picuí - PB": {cabos:17865,postes:18,ajustado:47818.8},
+      "Projetado Clusters 9, 26, 50, 122 e 242 - Senhor do Bonfim - BA": {cabos:40896,postes:87,ajustado:137855.08},
+      "Projetado Cluster 10 - Caém - BA": {cabos:25290,postes:58,ajustado:96066.04},
+      "Projetado Cluster  21,40 e 450 - Capim Grosso - BA": {cabos:28675,postes:66,ajustado:69842.68},
+      "Expansão Cluster 371 - Filadélfia - BA": {cabos:4870,postes:11,ajustado:15576.25},
+      "Expansão - Cluster 439 e 261 - Capim Grosso - BA": {cabos:17645,postes:10,ajustado:54364.84},
+      "Expansão Cluster 128 e 348 - Capim Grosso - BA": {cabos:8057,postes:62,ajustado:58908.85},
+      "Expansão Cluster 413,293 e 17 - São José do Jacuípe - BA": {cabos:23290,postes:14,ajustado:62341.32},
+      "Expansão Cluster 262 - Saúde - BA": {cabos:3850,postes:3,ajustado:11443.2},
+      "Expansão Cluster 103 - Saúde - BA": {cabos:8820,postes:53,ajustado:48271.54},
+      "Expansão Cluster 271 - Itiúba - BA": {cabos:9530,postes:6,ajustado:35932.1},
+      "Expansão Cluster 447 - Itiúba - BA": {cabos:12305,postes:0,ajustado:37981.85},
+      "Expansão Cluster 415 - Queimadas - BA": {cabos:6928,postes:14,ajustado:31642.16},
+      "Expansão Cluster 33 e 177 - Caém - BA": {cabos:24842,postes:17,ajustado:100469.84},
+      "Expansão Cluster 78, 88, 94, 111, 114, 208 e 427 - Antônio Gonçalves - BA": {cabos:32382,postes:140,ajustado:144783.24},
+      "Expansão Cluster 29,27,360,157,167,315,377 e 233  Ponto Novo - BA": {cabos:40630,postes:38,ajustado:83877.21},
+      "Expansão Cluster 172 - Sossêgo - PB": {cabos:9500,postes:82,ajustado:63547.84},
+      "Expansão Clusters 197, 246 e 316 - Lajedo - PE": {cabos:14295,postes:1,ajustado:39322.24},
+      "Expansão Cluster 5 - Jucati - PE": {cabos:15817,postes:28,ajustado:55836.62},
+      "Expansão Cluster 160 - Seridó  - PB": {cabos:10875,postes:14,ajustado:39460.77},
+      "Expansão Cluster 182 - Lajedo - PE": {cabos:2710,postes:1,ajustado:7408.57},
+      "Expansão Clusters 169 - Sossego - PB": {cabos:11009,postes:103,ajustado:57555.53},
+      "Expansão Clusters 83, 123 e 207 - Pindobaçu - BA": {cabos:17916,postes:124,ajustado:86601.37},
+      "Projeto Cluster - 201 e 257  - Filadélfia - BA": {cabos:9725,postes:12,ajustado:22610.4},
+      "Expansão Cluster 361 -  Quixabeira - BA": {cabos:3467,postes:15,ajustado:14007.19},
+      "Expansão Cluster 350 - Itiúba - BA": {cabos:10323,postes:140,ajustado:62672.9},
+      "Expansão Cluster 269 - Jacobina - BA": {cabos:549,postes:0,ajustado:2397.37},
+      "Expansão Cluster - 62, 228, 359 - Filadélfia - BA": {cabos:12410,postes:45,ajustado:62921.93},
+      "Expansão Cluster 108 e 465 - Itiúba - BA": {cabos:7121,postes:46,ajustado:41676.6},
+      "Expansão Cluster 186 - Triunfo - PB": {cabos:3770,postes:2,ajustado:17099.22},
+      "Expansão Cluster 85, 199, 220, 282, 391, 392 e 399 - Sossêgo - PB": {cabos:32269,postes:206,ajustado:146847.93},
+      "Expansão Cluster 170, 185 e 400 - Pedra Lavrada - PB": {cabos:11994,postes:77,ajustado:78161.63},
+      "Expansão Cluster 398  - Cubati - PB": {cabos:1131,postes:0,ajustado:3994.19},
+      "Expansão Cluster 321 e 322 - Picuí - PB": {cabos:6273,postes:23,ajustado:25812.97},
+      "Expansão Cluster 168 - Cubati -PB": {cabos:11875,postes:22,ajustado:42157.43},
+      "Expansão Cluster 250 - Picuí -  PB": {cabos:1568,postes:9,ajustado:10052.76},
+      "Expansão Cluster - 102 e 219 - Tenório - PB": {cabos:17500,postes:55,ajustado:71501.58},
+      "Projetado Clusters 8 e 369 - Caldeirão Grande - BA": {cabos:9041,postes:14,ajustado:29077.86},
+      "Projetado Cluster 18 - Capim Grosso -BA": {cabos:22670,postes:37,ajustado:100427.79},
+      "Expansão Clusters 254 e 330 + Projeto Existente - Bernardino Batista - PB": {cabos:11994,postes:49,ajustado:51919.69},
+      "Expansão Cluster 96, 93 e 107 - Pedra Lavrada - PB": {cabos:16395,postes:93,ajustado:86180.9},
+      "Expansão Cluster 253 - São João do Rio do Peixe - PB": {cabos:4852,postes:52,ajustado:37458.14},
+      "Expansão Cluster 251 e 126 - Nova Palmeira - PB": {cabos:16895,postes:87,ajustado:88712.31},
+      "Expansão Cluster 95 e 137 - Picuí - PB": {cabos:14430,postes:7,ajustado:40336.32},
+      "Expansão Cluster 279 - Picuí - PB": {cabos:2051,postes:9,ajustado:10337.5},
+      "Expansão Cluster 184 - Picuí - PB": {cabos:340,postes:1,ajustado:1991.27},
+      "Expansão Cluster 63 - Frei Martins - PB": {cabos:17040,postes:137,ajustado:96230.79},
+      "Expansão Cluster 274 - Boa Vista - PB": {cabos:12735,postes:95,ajustado:68110.32},
+      "Expansão Cluster 145 - Tenório - PB": {cabos:1364,postes:2,ajustado:5226.6},
+      "Expansão Cluster 147,277,278,281 e 393  Pedra Lavrada - PB": {cabos:8671,postes:65,ajustado:55619.9},
+      "Expansão Cluster 396 - Serido - PB": {cabos:1865,postes:17,ajustado:18208.58},
+      "Projetado Clusters 13, 119, 329 e 394 - Cubati - PB": {cabos:20926,postes:171,ajustado:104218.31},
+      "Expansão Cluster 221 - Baraúna - PB": {cabos:10485,postes:20,ajustado:50635.1},
+      "Expansão Cluster 34, 183 e 280 - Sossêgo - PB": {cabos:8270,postes:11,ajustado:48368.45},
+      "Expansão Cluster 326, 471 e 276 - Sossego - PB": {cabos:7145,postes:10,ajustado:25190.17},
+      "Expansão Cluster 138 e 325 - São Vicente do Seridó - PB": {cabos:13694,postes:45,ajustado:57507.18},
+      "Expansão  Cluster 143 - Capim Grosso - BA": {cabos:10070,postes:0,ajustado:30016.69},
+      "Projeto Cluster - 155, 326 e 358 -  Jacobina - BA": {cabos:36165,postes:14,ajustado:102993.24},
+      "Expansão Clusters 69, 97, 171, 324 e 328 - Cubati - PB": {cabos:13013,postes:34,ajustado:56136.9},
+      "Expansão Cluster 173 - Triunfo - PB": {cabos:5045,postes:19,ajustado:21777.65},
+      "Expansão Cluster 118, 125, 383 e 384 - São Vicente do Seridó - PB": {cabos:15336,postes:42,ajustado:63350.82},
+      "Expansão Cluster 320 - São Vicente do Seridó - PB": {cabos:1708,postes:10,ajustado:9562.76},
+      "Projeto Cluster 137 - Capim Grosso - BA": {cabos:1301,postes:0,ajustado:5915.97},
+      "Expansão Cluster 273 - Torre Brenan - Junco do Seridó - PB": {cabos:1045,postes:11,ajustado:51353.65},
+      "2ª Opção - Expansão Cluster 273 - Torre Brenan - Junco do Seridó - PB": {cabos:27228,postes:123,ajustado:157079.56},
+      "Expansão Cluster 387  - Juazeirinho - PB": {cabos:1504,postes:0,ajustado:3817.93},
+      "Expansão Cluster 201 - São João do Rio do Peixe - PB": {cabos:7690,postes:25,ajustado:36146.3},
+      "Escola Marculina e Cluster 172  - Caldeirão Grande - BA": {cabos:6770,postes:22,ajustado:29033.9},
+      "Escola Matilde Cerqueira - + Clusters 72, 51, 363 e 368": {cabos:22781,postes:82,ajustado:107677.37},
+      "Escola Francisco de Assis - Cluster 166 e 386 - Caldeirão Grande - BA": {cabos:17058,postes:79,ajustado:81858.26},
+      "Escola Boanergis Lopes - Clusters 175 e 259 -Caldeirão Grande - BA": {cabos:12214,postes:17,ajustado:42609.18},
+      "Expansão Cluster 327 - Picuí - PB": {cabos:1051,postes:5,ajustado:5851.47},
+      "Expansão Cluster 39 - Ponto Novo - BA": {cabos:7168,postes:11,ajustado:36714.76},
+      "Expansão Cluster 275 - Sossego - PB": {cabos:11045,postes:89,ajustado:85286.65},
+      "Expansão Cluster 198 - São Vicente do Seridó - PB": {cabos:1565,postes:25,ajustado:18341.36},
+    };
+    const totalValorAjustado = 4424322.12;
+    const totalValorOriginal = 7009030.7;
     const PCOLORS = ["#0073ea","#00c875","#e2445c","#fdab3d","#a25ddc","#ff642e","#579bfc","#03c4eb"];
 
     const projetos = mondayProjetos.map(p => ({
@@ -531,7 +622,7 @@
                   <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 13/05/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-                  {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
+                  {[["overview","🏠 Visão Geral"],["pipeline","Pipeline"],["projetos","Projetos"],["projetistas","Projetistas"],["valorajustado","💰 Valor Ajustado"]].map(([t,l]) => tabBtn(t, tab, setTab, l))}
                 </div>
 
                 {tab === "overview" && (
@@ -704,6 +795,98 @@
                     <div style={{ fontSize:11, color:"#aaa", marginTop:8, textAlign:"right" }}>{filtered.length} projetos · {filtered.reduce((s,p)=>s+p.qtdClusters,0)} clusters</div>
                   </div>
                 )}
+
+
+                {tab === "valorajustado" && (() => {
+                  // Enriquecer projetos com dados ajustados
+                  const projAjust = projetos.map(p => {
+                    const d = AJUSTADOS[p.nome];
+                    if (!d) return null;
+                    const deducCabo = d.cabos * 2.03;
+                    const deducPoste = d.postes * 100;
+                    return { ...p, cabos:d.cabos, postes:d.postes, ajustado:d.ajustado,
+                      deducCabo, deducPoste, pctReducao: ((p.valor - d.ajustado)/p.valor*100) };
+                  }).filter(Boolean).sort((a,b) => b.ajustado - a.ajustado);
+
+                  const totalDeducCabo  = projAjust.reduce((s,p)=>s+p.deducCabo,0);
+                  const totalDeducPoste = projAjust.reduce((s,p)=>s+p.deducPoste,0);
+                  const reducaoTotal    = totalValorOriginal - totalValorAjustado;
+                  const pctReducao      = reducaoTotal / totalValorOriginal * 100;
+
+                  return (
+                    <div>
+                      <div style={{marginBottom:16}}>
+                        <div style={{fontSize:16,fontWeight:800,color:"#1f1f1f"}}>💰 Valor do Projeto Ajustado</div>
+                        <div style={{fontSize:11,color:"#888",marginTop:4}}>
+                          Sem mão de obra · Sem valor do projeto de postes · Implantação de postes a R$200 (era R$300)
+                        </div>
+                      </div>
+
+                      {/* KPI Cards */}
+                      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
+                        <StatCard icon="💰" label="Valor Original Total" value={fmt(totalValorOriginal)} sub="soma dos projetos" color="#0073ea" />
+                        <StatCard icon="✅" label="Valor Ajustado Total" value={fmt(totalValorAjustado)} sub="após deduções" color="#00c875" />
+                        <StatCard icon="📉" label="Redução Total" value={fmt(reducaoTotal)} sub={`${pctReducao.toFixed(1)}% de economia`} color="#e2445c" />
+                        <StatCard icon="🔌" label="Dedução Cabos" value={fmt(totalDeducCabo)} sub="cabos × R$2,03/m" color="#a25ddc" />
+                        <StatCard icon="🪝" label="Dedução Postes" value={fmt(totalDeducPoste)} sub="postes × R$100 (300→200)" color="#fdab3d" />
+                        <StatCard icon="📊" label="Projetos calculados" value={String(projAjust.length)} sub="com dados completos" color="#03c4eb" />
+                      </div>
+
+                      {/* Fórmula explicada */}
+                      <div style={{background:"#f0f7ff",borderRadius:12,padding:"14px 18px",marginBottom:16,border:"1px solid #c5dcff"}}>
+                        <div style={{fontWeight:700,fontSize:13,color:"#0073ea",marginBottom:8}}>📐 Como o valor ajustado é calculado</div>
+                        <div style={{display:"flex",gap:20,flexWrap:"wrap",fontSize:12,color:"#555"}}>
+                          <div><b>1.</b> Dedução mão de obra + projeto de postes: <span style={{color:"#e2445c",fontWeight:700}}>QTD Cabos × R$2,03/m</span></div>
+                          <div><b>2.</b> Ajuste implantação de postes R$300→R$200: <span style={{color:"#fdab3d",fontWeight:700}}>QTD Postes × R$100</span></div>
+                          <div style={{fontWeight:700,color:"#00c875"}}><b>=</b> Valor Ajustado = Valor Original − (Cabos×2,03) − (Postes×100)</div>
+                        </div>
+                      </div>
+
+                      {/* Tabela */}
+                      <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)",overflowX:"auto"}}>
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                          <thead>
+                            <tr style={{background:"#f8f9fb"}}>
+                              {["#","Projeto","Status","Cabos (m)","Postes","Valor Original","− Cabos","− Postes","Valor Ajustado","% Redução"].map(h=>(
+                                <th key={h} style={{padding:"10px 10px",textAlign:["Cabos (m)","Postes"].includes(h)?"center":"left",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {projAjust.map((p,i)=>(
+                              <tr key={i} style={{background:i%2===0?"#fff":"#fafafa"}}>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",color:"#bbb",fontSize:10}}>{i+1}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:220}}>{p.nome}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0"}}><span style={{background:statusColorMap[p.status]||"#ccc",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.status}</span></td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#0073ea",fontWeight:600}}>{fmtN(p.cabos)}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#fdab3d",fontWeight:600}}>{p.postes}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#555"}}>{fmt(p.valor)}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#a25ddc"}}>−{fmt(p.deducCabo)}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#fdab3d"}}>−{fmt(p.deducPoste)}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:800,color:"#00c875",whiteSpace:"nowrap"}}>{fmt(p.ajustado)}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center"}}>
+                                  <span style={{background:p.pctReducao>40?"#fde8e8":p.pctReducao>30?"#fff8ec":"#e8f5e9",color:p.pctReducao>40?"#e2445c":p.pctReducao>30?"#b8860b":"#00c875",borderRadius:20,padding:"2px 8px",fontWeight:700,fontSize:10}}>
+                                    {p.pctReducao.toFixed(1)}%
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{background:"#f0f7ff",fontWeight:800}}>
+                              <td colSpan={5} style={{padding:"10px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({projAjust.length} projetos)</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#555"}}>{fmt(totalValorOriginal)}</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#a25ddc"}}>−{fmt(totalDeducCabo)}</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#fdab3d"}}>−{fmt(totalDeducPoste)}</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{fmt(totalValorAjustado)}</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"center",color:"#e2445c",fontWeight:800}}>{pctReducao.toFixed(1)}%</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {tab === "projetistas" && (
                   <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
