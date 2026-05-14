@@ -585,6 +585,7 @@
       const [ppSort, setPpSort] = useState("valor");
       const [search, setSearch] = useState("");
       const [fStatus, setFStatus] = useState("all");
+      const [fStatusAjust, setFStatusAjust] = useState("all");
 
       const filtered = projetos.filter(p => {
         const ms = !search || p.nome.toLowerCase().includes(search.toLowerCase()) || p.projetista.toLowerCase().includes(search.toLowerCase()) || p.cidade.toLowerCase().includes(search.toLowerCase());
@@ -799,7 +800,7 @@
 
                 {tab === "valorajustado" && (() => {
                   // Enriquecer projetos com dados ajustados
-                  const projAjust = projetos.map(p => {
+                  const projAjustAll = projetos.map(p => {
                     const d = AJUSTADOS[p.nome];
                     if (!d) return null;
                     const deducCabo = d.cabos * 2.03;
@@ -808,10 +809,14 @@
                       deducCabo, deducPoste, pctReducao: ((p.valor - d.ajustado)/p.valor*100) };
                   }).filter(Boolean).sort((a,b) => b.ajustado - a.ajustado);
 
+                  const projAjust = fStatusAjust === "all" ? projAjustAll : projAjustAll.filter(p => p.status === fStatusAjust);
+
                   const totalDeducCabo  = projAjust.reduce((s,p)=>s+p.deducCabo,0);
                   const totalDeducPoste = projAjust.reduce((s,p)=>s+p.deducPoste,0);
-                  const reducaoTotal    = totalValorOriginal - totalValorAjustado;
-                  const pctReducao      = reducaoTotal / totalValorOriginal * 100;
+                  const totalOrig       = projAjust.reduce((s,p)=>s+p.valor,0);
+                  const totalAjust      = projAjust.reduce((s,p)=>s+p.ajustado,0);
+                  const reducaoTotal    = totalOrig - totalAjust;
+                  const pctReducao      = totalOrig > 0 ? reducaoTotal / totalOrig * 100 : 0;
 
                   return (
                     <div>
@@ -822,14 +827,33 @@
                         </div>
                       </div>
 
+                      {/* Filtro por status */}
+                      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+                        <span style={{fontSize:12,color:"#888",fontWeight:600}}>Filtrar por status:</span>
+                        <select value={fStatusAjust} onChange={e=>setFStatusAjust(e.target.value)}
+                          style={{padding:"8px 14px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,background:"#fff",cursor:"pointer",outline:"none"}}>
+                          <option value="all">Todos os status ({projAjustAll.length} projetos)</option>
+                          {PIPELINE.filter(s=>projAjustAll.some(p=>p.status===s.status)).map(s=>(
+                            <option key={s.status} value={s.status}>
+                              {s.status} ({projAjustAll.filter(p=>p.status===s.status).length})
+                            </option>
+                          ))}
+                        </select>
+                        {fStatusAjust !== "all" && (
+                          <button onClick={()=>setFStatusAjust("all")} style={{padding:"7px 14px",borderRadius:20,border:"none",background:"#e2445c",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                            ✕ Limpar filtro
+                          </button>
+                        )}
+                      </div>
+
                       {/* KPI Cards */}
                       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-                        <StatCard icon="💰" label="Valor Original Total" value={fmt(totalValorOriginal)} sub="soma dos projetos" color="#0073ea" />
-                        <StatCard icon="✅" label="Valor Ajustado Total" value={fmt(totalValorAjustado)} sub="após deduções" color="#00c875" />
-                        <StatCard icon="📉" label="Redução Total" value={fmt(reducaoTotal)} sub={`${pctReducao.toFixed(1)}% de economia`} color="#e2445c" />
+                        <StatCard icon="💰" label="Valor Original" value={fmt(totalOrig)} sub={`${projAjust.length} projetos`} color="#0073ea" />
+                        <StatCard icon="✅" label="Valor Ajustado" value={fmt(totalAjust)} sub="após deduções" color="#00c875" />
+                        <StatCard icon="📉" label="Redução" value={fmt(reducaoTotal)} sub={`${pctReducao.toFixed(1)}% de economia`} color="#e2445c" />
                         <StatCard icon="🔌" label="Dedução Cabos" value={fmt(totalDeducCabo)} sub="cabos × R$2,03/m" color="#a25ddc" />
                         <StatCard icon="🪝" label="Dedução Postes" value={fmt(totalDeducPoste)} sub="postes × R$100 (300→200)" color="#fdab3d" />
-                        <StatCard icon="📊" label="Projetos calculados" value={String(projAjust.length)} sub="com dados completos" color="#03c4eb" />
+                        <StatCard icon="📊" label="Projetos" value={String(projAjust.length)} sub={fStatusAjust==="all"?"todos os status":fStatusAjust} color="#03c4eb" />
                       </div>
 
                       {/* Fórmula explicada */}
@@ -874,11 +898,11 @@
                           </tbody>
                           <tfoot>
                             <tr style={{background:"#f0f7ff",fontWeight:800}}>
-                              <td colSpan={5} style={{padding:"10px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({projAjust.length} projetos)</td>
-                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#555"}}>{fmt(totalValorOriginal)}</td>
+                              <td colSpan={5} style={{padding:"10px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({projAjust.length} projetos{fStatusAjust!=="all"?` · ${fStatusAjust}`:""})</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#555"}}>{fmt(totalOrig)}</td>
                               <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#a25ddc"}}>−{fmt(totalDeducCabo)}</td>
                               <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#fdab3d"}}>−{fmt(totalDeducPoste)}</td>
-                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{fmt(totalValorAjustado)}</td>
+                              <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{fmt(totalAjust)}</td>
                               <td style={{padding:"10px",borderTop:"2px solid #ddd",textAlign:"center",color:"#e2445c",fontWeight:800}}>{pctReducao.toFixed(1)}%</td>
                             </tr>
                           </tfoot>
