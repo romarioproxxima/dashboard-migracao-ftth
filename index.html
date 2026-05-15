@@ -590,6 +590,7 @@
       const [loadingAjust, setLoadingAjust] = useState(false);
       const [ajustMsg, setAjustMsg] = useState("");
       const [ajustLastUpdate, setAjustLastUpdate] = useState(null);
+      const [liveStatuses, setLiveStatuses] = useState(null); // {nome: statusMapped}
 
       const filtered = projetos.filter(p => {
         const ms = !search || p.nome.toLowerCase().includes(search.toLowerCase()) || p.projetista.toLowerCase().includes(search.toLowerCase()) || p.cidade.toLowerCase().includes(search.toLowerCase());
@@ -607,7 +608,7 @@
       const fetchAjustados = async () => {
         setLoadingAjust(true); setAjustMsg("");
         try {
-          const q = `query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:["numeric_mm0fhmyb","numeric_mm0a5pkz","numeric_mm0fzxsd"]){ id text } } } } }`;
+          const q = `query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:["numeric_mm0fhmyb","numeric_mm0a5pkz","numeric_mm0fzxsd","color_mm0as2nc"]){ id text } } } } }`;
           const res = await fetch("https://api.monday.com/v2", {
             method:"POST",
             headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
@@ -617,13 +618,25 @@
           if (!data.data) throw new Error(data.errors?.[0]?.message || "Erro na API");
           const items = data.data.boards[0].items_page.items;
           const newMap = {};
+          const newStatuses = {};
           const updates = [];
+          const STATUS_MAP_LIVE = {
+            "Em desenvolvimento":"Em desenvolvimento","Aguardando vistoria":"Aguardando vistoria",
+            "Vistoria Concluída":"Vistoria concluída","Avaliação do supervisor":"Avaliação supervisor",
+            "Avaliação coordenador":"Avaliação coordenador","Avaliação gerencia":"Avaliação gerência",
+            "Aguardando Aprovação diretoria":"Aguard. aprovação diretoria","Em correção":"Em correção",
+            "Projetado":"Projetado","Pausado":"Pausado","Em Ajuste":"Em Ajuste",
+            "Em Revisão":"Em Revisão","Reprovado":"Reprovado",
+          };
           items.forEach(item => {
             const vals = {};
-            item.column_values.forEach(cv => { vals[cv.id] = parseFloat(cv.text)||0; });
-            const cabos = vals["numeric_mm0a5pkz"]||0;
-            const postes = vals["numeric_mm0fzxsd"]||0;
-            const valor = vals["numeric_mm0fhmyb"]||0;
+            item.column_values.forEach(cv => { vals[cv.id] = cv.text; });
+            const cabos = parseFloat(vals["numeric_mm0a5pkz"])||0;
+            const postes = parseFloat(vals["numeric_mm0fzxsd"])||0;
+            const valor = parseFloat(vals["numeric_mm0fhmyb"])||0;
+            const statusRaw = vals["color_mm0as2nc"]||"";
+            const statusMapped = STATUS_MAP_LIVE[statusRaw] || statusRaw;
+            newStatuses[item.name] = statusMapped;
             if (valor > 0) {
               const ajustado = Math.round((valor-(cabos*2.03)-(postes*100))*100)/100;
               newMap[item.name] = {cabos,postes,ajustado};
@@ -631,6 +644,7 @@
             }
           });
           setLiveAjustados(newMap);
+          setLiveStatuses(newStatuses);
           // Atualizar coluna no Monday
           let ok=0;
           for (const upd of updates) {
@@ -850,11 +864,14 @@
                   // Enriquecer projetos com dados ajustados
                   const srcAjust = liveAjustados || AJUSTADOS;
                   const projAjustAll = projetos.map(p => {
-                    const d = srcAjust[p.nome];
+                    // Usar status ao vivo se disponível (via botão atualizar)
+                    const liveStatus = liveStatuses ? liveStatuses[p.nome] : null;
+                    const pComStatus = liveStatus ? {...p, status: liveStatus} : p;
+                    const d = srcAjust[pComStatus.nome];
                     if (!d) return null;
                     const deducCabo = d.cabos * 2.03;
                     const deducPoste = d.postes * 100;
-                    return { ...p, cabos:d.cabos, postes:d.postes, ajustado:d.ajustado,
+                    return { ...pComStatus, cabos:d.cabos, postes:d.postes, ajustado:d.ajustado,
                       deducCabo, deducPoste, pctReducao: ((p.valor - d.ajustado)/p.valor*100) };
                   }).filter(Boolean).sort((a,b) => b.ajustado - a.ajustado);
 
@@ -888,7 +905,7 @@
                         </button>
                         {ajustLastUpdate && !ajustMsg.startsWith("❌") && (
                           <span style={{fontSize:11,color:"#00c875",fontWeight:600}}>
-                            {liveAjustados?"🟢 Dados ao vivo":"📋 Dados fixos"} · Última atualização: {ajustLastUpdate}
+                            {liveAjustados?"🟢 Dados ao vivo (status + valores)":"📋 Dados locais (clique para atualizar)"} · Última atualização: {ajustLastUpdate}
                           </span>
                         )}
                         {ajustMsg && (
