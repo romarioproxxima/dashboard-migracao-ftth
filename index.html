@@ -455,6 +455,164 @@
               <span><span style={{display:"inline-block",width:2,height:10,background:"#e2445c",marginRight:4}}/>Hoje</span>
               <span style={{color:"#aaa"}}>▶ início da fase &nbsp; ■ fim da fase</span>
             </div>
+            {/* ══ BOARD MONDAY LIVE ══ */}
+            {modulo === "boardlive" && (() => {
+              const allStatuses = boardData
+                ? [...new Set(boardData.map(p=>p.status))].sort()
+                : [];
+
+              const filtered = (boardData||[])
+                .filter(p => boardStatusFilter==="all" || p.status===boardStatusFilter)
+                .filter(p => !boardSearch ||
+                  p.nome.toLowerCase().includes(boardSearch.toLowerCase()) ||
+                  p.projetista.toLowerCase().includes(boardSearch.toLowerCase()))
+                .sort((a,b) => {
+                  const {col,dir} = boardSort;
+                  const va = typeof a[col]==="string" ? a[col].toLowerCase() : a[col]||0;
+                  const vb = typeof b[col]==="string" ? b[col].toLowerCase() : b[col]||0;
+                  return dir==="asc" ? (va>vb?1:va<vb?-1:0) : (va<vb?1:va>vb?-1:0);
+                });
+
+              const sortBtn = (col,label) => (
+                <span onClick={()=>setBoardSort(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}))}
+                  style={{cursor:"pointer",userSelect:"none",whiteSpace:"nowrap"}}>
+                  {label}{boardSort.col===col?(boardSort.dir==="asc"?" ▲":" ▼"):" ⇅"}
+                </span>
+              );
+
+              const totValor    = filtered.reduce((s,p)=>s+p.valor,0);
+              const totAjust    = filtered.reduce((s,p)=>s+p.ajustado,0);
+              const totPortas   = filtered.reduce((s,p)=>s+p.portas,0);
+              const totClientes = filtered.reduce((s,p)=>s+p.clientes,0);
+              const totPostes   = filtered.reduce((s,p)=>s+p.postes,0);
+
+              return (
+                <div>
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:20,fontWeight:800,color:"#1f1f1f"}}>📊 Board Monday — Visão Completa</div>
+                    <div style={{fontSize:11,color:"#888",marginTop:3}}>Dados ao vivo direto do Monday.com · Todos os campos do quadro</div>
+                  </div>
+
+                  {/* Botão carregar + msg */}
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+                    <button onClick={fetchBoard} disabled={boardLoading}
+                      style={{display:"flex",alignItems:"center",gap:8,padding:"10px 22px",borderRadius:10,
+                        border:"none",background:boardLoading?"#aaa":"#0073ea",color:"#fff",fontWeight:700,
+                        fontSize:13,cursor:boardLoading?"not-allowed":"pointer",boxShadow:"0 2px 8px rgba(0,115,234,0.3)"}}>
+                      {boardLoading
+                        ? <><span style={{display:"inline-block",width:14,height:14,border:"2px solid #fff",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/> Carregando...</>
+                        : <><span style={{fontSize:16}}>🔄</span> Carregar do Monday</>}
+                    </button>
+                    {boardMsg && <span style={{fontSize:11,fontWeight:600,color:boardMsg.startsWith("✅")?"#00c875":"#e2445c"}}>{boardMsg}</span>}
+                  </div>
+
+                  {boardData && (<>
+                    {/* Filtros */}
+                    <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+                      <input placeholder="🔍 Buscar projeto ou projetista..."
+                        value={boardSearch} onChange={e=>setBoardSearch(e.target.value)}
+                        style={{padding:"9px 16px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,
+                          flex:1,minWidth:220,outline:"none"}}/>
+                      <select value={boardStatusFilter} onChange={e=>setBoardStatusFilter(e.target.value)}
+                        style={{padding:"9px 14px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,background:"#fff",cursor:"pointer",outline:"none"}}>
+                        <option value="all">Todos os status ({boardData.length})</option>
+                        {allStatuses.map(s=>(
+                          <option key={s} value={s}>{s} ({boardData.filter(p=>p.status===s).length})</option>
+                        ))}
+                      </select>
+                      {(boardStatusFilter!=="all"||boardSearch) && (
+                        <button onClick={()=>{setBoardStatusFilter("all");setBoardSearch("");}}
+                          style={{padding:"7px 14px",borderRadius:20,border:"none",background:"#e2445c",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          ✕ Limpar filtros
+                        </button>
+                      )}
+                      <span style={{fontSize:11,color:"#aaa"}}>{filtered.length} projeto{filtered.length!==1?"s":""}</span>
+                    </div>
+
+                    {/* KPI Cards */}
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
+                      <StatCard icon="📁" label="Projetos" value={String(filtered.length)} sub={boardStatusFilter==="all"?"todos":boardStatusFilter} color="#0073ea"/>
+                      <StatCard icon="💰" label="Valor Total" value={fmt(totValor)} sub="soma do filtro" color="#ff642e"/>
+                      <StatCard icon="✅" label="Valor Ajustado" value={totAjust>0?fmt(totAjust):"—"} sub="sem MO e postes ajust." color="#00c875"/>
+                      <StatCard icon="🔌" label="Total Portas" value={fmtN(totPortas)} sub="CTOs 1x8 e 1x16" color="#03c4eb"/>
+                      <StatCard icon="👥" label="Clientes" value={fmtN(totClientes)} sub="clientes no filtro" color="#a25ddc"/>
+                      <StatCard icon="🪝" label="Postes" value={fmtN(totPostes)} sub="implantação" color="#fdab3d"/>
+                    </div>
+
+                    {/* Tabela completa */}
+                    <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)",overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                        <thead>
+                          <tr style={{background:"#f8f9fb",position:"sticky",top:0,zIndex:2}}>
+                            <th style={{padding:"10px 10px",textAlign:"left",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>#</th>
+                            <th style={{padding:"10px 10px",textAlign:"left",color:"#555",fontWeight:700,borderBottom:"2px solid #eee"}}>{sortBtn("nome","Projeto")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"left",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("projetista","Projetista")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"left",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("status","Status")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"center",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("portas","Portas")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"center",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("clientes","Clientes")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"center",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("postes","Postes")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"center",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("cabos","Cabos (m)")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"right",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("valor","Valor")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"right",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("valorPorPorta","R$/Porta")}</th>
+                            <th style={{padding:"10px 10px",textAlign:"right",color:"#555",fontWeight:700,borderBottom:"2px solid #eee",whiteSpace:"nowrap"}}>{sortBtn("ajustado","Vl. Ajustado")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.length===0 && (
+                            <tr><td colSpan={11} style={{padding:30,textAlign:"center",color:"#aaa"}}>Nenhum resultado</td></tr>
+                          )}
+                          {filtered.map((p,i)=>(
+                            <tr key={p.id} style={{background:i%2===0?"#fff":"#fafafa"}}
+                              onClick={()=>window.open(p.url,"_blank")}
+                              onMouseEnter={e=>e.currentTarget.style.background="#f0f7ff"}
+                              onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"#fff":"#fafafa"}
+                              title="Abrir no Monday.com"
+                              style={{background:i%2===0?"#fff":"#fafafa",cursor:"pointer"}}>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",color:"#bbb",fontSize:10}}>{i+1}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:260}}>
+                                <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nome}</div>
+                              </td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",color:"#666",whiteSpace:"nowrap"}}>{p.projetista}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0"}}>
+                                <span style={{background:statusColorMap[p.status]||"#ccc",color:"#fff",borderRadius:20,padding:"2px 8px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.status||"—"}</span>
+                              </td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#03c4eb"}}>{p.portas||"—"}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#666"}}>{p.clientes||"—"}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#fdab3d",fontWeight:600}}>{p.postes||"—"}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#0073ea"}}>{p.cabos?fmtN(p.cabos):"—"}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:700,color:"#ff642e",whiteSpace:"nowrap"}}>{p.valor>0?fmt(p.valor):"—"}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#888",whiteSpace:"nowrap"}}>{p.valorPorPorta>0?fmt(p.valorPorPorta):"—"}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:700,color:"#00c875",whiteSpace:"nowrap"}}>{p.ajustado>0?fmt(p.ajustado):"—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr style={{background:"#f0f7ff",fontWeight:800}}>
+                            <td colSpan={4} style={{padding:"9px 10px",borderTop:"2px solid #ddd",color:"#333",fontSize:11}}>TOTAL ({filtered.length})</td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd",textAlign:"center",color:"#03c4eb"}}>{fmtN(totPortas)}</td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd",textAlign:"center",color:"#666"}}>{fmtN(totClientes)}</td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd",textAlign:"center",color:"#fdab3d"}}>{fmtN(totPostes)}</td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd",textAlign:"center",color:"#0073ea"}}>{fmtN(filtered.reduce((s,p)=>s+p.cabos,0))}</td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#ff642e"}}>{fmt(totValor)}</td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd"}}></td>
+                            <td style={{padding:"9px 10px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{totAjust>0?fmt(totAjust):"—"}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </>)}
+
+                  {!boardData && !boardLoading && (
+                    <div style={{background:"#f8f9fb",borderRadius:14,padding:40,textAlign:"center",color:"#aaa"}}>
+                      <div style={{fontSize:40,marginBottom:12}}>📊</div>
+                      <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>Clique em "Carregar do Monday" para ver os dados</div>
+                      <div style={{fontSize:12}}>Busca todos os projetos com status, valores, portas, clientes e mais</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
           </div>
         </div>
       );
@@ -586,6 +744,13 @@
       const [search, setSearch] = useState("");
       const [fStatus, setFStatus] = useState("all");
       const [fStatusAjust, setFStatusAjust] = useState("all");
+      // Board Live states
+      const [boardData, setBoardData] = useState(null);
+      const [boardLoading, setBoardLoading] = useState(false);
+      const [boardMsg, setBoardMsg] = useState("");
+      const [boardSearch, setBoardSearch] = useState("");
+      const [boardStatusFilter, setBoardStatusFilter] = useState("all");
+      const [boardSort, setBoardSort] = useState({col:"nome",dir:"asc"});
       const [liveAjustados, setLiveAjustados] = useState(null);
       const [loadingAjust, setLoadingAjust] = useState(false);
       const [ajustMsg, setAjustMsg] = useState("");
@@ -661,6 +826,67 @@
         setLoadingAjust(false);
       };
 
+      // ─── FETCH BOARD LIVE ────────────────────────────────────────────────────────
+      const fetchBoard = async () => {
+        setBoardLoading(true); setBoardMsg("");
+        try {
+          const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0a5pkz",
+            "numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61","numeric_mm0fzxsd",
+            "numeric_mm3bhenr"];
+          const q = `query {
+            boards(ids:[18399019664]){
+              items_page(limit:100){
+                items{
+                  id name url
+                  column_values(ids:${JSON.stringify(cols)}){ id text }
+                }
+              }
+            }
+          }`.replace(/\n\s+/g,' ');
+          const res = await fetch("https://api.monday.com/v2",{
+            method:"POST",
+            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
+            body:JSON.stringify({query:q})
+          });
+          const data = await res.json();
+          if (!data.data) throw new Error(data.errors?.[0]?.message||"Erro na API");
+          const STATUS_MAP_B = {
+            "Em desenvolvimento":"Em desenvolvimento","Aguardando vistoria":"Aguardando vistoria",
+            "Vistoria Concluída":"Vistoria concluída","Avaliação do supervisor":"Avaliação supervisor",
+            "Avaliação coordenador":"Avaliação coordenador","Avaliação gerencia":"Avaliação gerência",
+            "Aguardando Aprovação diretoria":"Aguard. aprovação diretoria","Em correção":"Em correção",
+            "Projetado":"Projetado","Pausado":"Pausado","Em Ajuste":"Em Ajuste",
+            "Em Revisão":"Em Revisão","Reprovado":"Reprovado",
+          };
+          const items = data.data.boards[0].items_page.items.map(item => {
+            const v = {};
+            item.column_values.forEach(cv => { v[cv.id] = cv.text; });
+            const valor     = parseFloat(v["numeric_mm0fhmyb"])||0;
+            const cabos     = parseFloat(v["numeric_mm0a5pkz"])||0;
+            const cto8      = parseFloat(v["numeric_mm0awjmt"])||0;
+            const cto16     = parseFloat(v["numeric_mm0fach"])||0;
+            const clientes  = parseFloat(v["numeric_mm0fpr61"])||0;
+            const postes    = parseFloat(v["numeric_mm0fzxsd"])||0;
+            const ajustado  = parseFloat(v["numeric_mm3bhenr"])||0;
+            const portas    = cto8*8 + cto16*16;
+            const statusRaw = v["color_mm0as2nc"]||"";
+            return {
+              id: item.id, nome: item.name, url: item.url,
+              projetista: v["person"]||"—",
+              status: STATUS_MAP_B[statusRaw]||statusRaw,
+              statusRaw, valor, cabos, cto8, cto16, portas,
+              clientes, postes, ajustado,
+              valorPorPorta: portas>0?valor/portas:0,
+            };
+          });
+          setBoardData(items);
+          setBoardMsg(`✅ ${items.length} projetos · atualizado ${new Date().toLocaleString("pt-BR")}`);
+        } catch(e) {
+          setBoardMsg("❌ Erro: "+e.message);
+        }
+        setBoardLoading(false);
+      };
+
       const tabBtn = (val, cur, set, label) => (
         <button key={val} onClick={() => set(val)} style={{ padding:"7px 16px", borderRadius:20, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:cur===val?"#0073ea":"#fff", color:cur===val?"#fff":"#555", boxShadow:"0 1px 4px rgba(0,0,0,0.08)" }}>{label}</button>
       );
@@ -670,7 +896,7 @@
           {/* Nav */}
           <div style={{ background:"#1f1f2e", padding:"0 20px", display:"flex", alignItems:"center", gap:4, height:52, boxShadow:"0 2px 8px rgba(0,0,0,0.2)" }}>
             <div style={{ color:"#fff", fontWeight:800, fontSize:14, marginRight:20 }}>📡 Migração Rádio</div>
-            {[["dashboard","📡 Dashboard"],["porprojeto","📋 Por Projeto"],["cronograma","📅 Cronograma"]].map(([m,l]) => (
+            {[["dashboard","📡 Dashboard"],["porprojeto","📋 Por Projeto"],["cronograma","📅 Cronograma"],["boardlive","📊 Board Monday"]].map(([m,l]) => (
               <button key={m} onClick={() => setModulo(m)} style={{ padding:"6px 16px", borderRadius:8, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:modulo===m?"#0073ea":"transparent", color:modulo===m?"#fff":"#aaa" }}>{l}</button>
             ))}
           </div>
