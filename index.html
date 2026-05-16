@@ -601,7 +601,8 @@
         setLoading(true); setMsg("");
         try {
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0a5pkz",
-            "numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61","numeric_mm0fzxsd","numeric_mm3bhenr"];
+            "numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61","numeric_mm0fzxsd",
+            "numeric_mm3bhenr","numeric_mm0fhb2h"];
           const q = "query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name url column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }";
           const res = await fetch("https://api.monday.com/v2",{
             method:"POST",
@@ -613,20 +614,26 @@
           const items = js.data.boards[0].items_page.items.map(item => {
             const v={};
             item.column_values.forEach(cv=>{v[cv.id]=cv.text;});
-            const valor=parseFloat(v["numeric_mm0fhmyb"])||0;
-            const cabos=parseFloat(v["numeric_mm0a5pkz"])||0;
-            const cto8=parseFloat(v["numeric_mm0awjmt"])||0;
-            const cto16=parseFloat(v["numeric_mm0fach"])||0;
-            const clientes=parseFloat(v["numeric_mm0fpr61"])||0;
-            const postes=parseFloat(v["numeric_mm0fzxsd"])||0;
-            const ajustado=parseFloat(v["numeric_mm3bhenr"])||0;
-            const portas=cto8*8+cto16*16;
-            const statusRaw=v["color_mm0as2nc"]||"";
-            return {id:item.id,nome:item.name,url:item.url,
-              projetista:v["person"]||"—",
-              status:STATUS_MAP_B[statusRaw]||statusRaw,
-              valor,cabos,cto8,cto16,portas,clientes,postes,ajustado,
-              valorPorPorta:portas>0?valor/portas:0};
+            const valor     = parseFloat(v["numeric_mm0fhmyb"])||0;
+            const cabos     = parseFloat(v["numeric_mm0a5pkz"])||0;
+            const cto8      = parseFloat(v["numeric_mm0awjmt"])||0;
+            const cto16     = parseFloat(v["numeric_mm0fach"])||0;
+            const clientes  = parseFloat(v["numeric_mm0fpr61"])||0;
+            const atendidos = parseFloat(v["numeric_mm0fhb2h"])||0;
+            const postes    = parseFloat(v["numeric_mm0fzxsd"])||0;
+            const ajustado  = parseFloat(v["numeric_mm3bhenr"])||0;
+            const totalCto  = cto8 + cto16;
+            const portas    = cto8*8 + cto16*16;
+            return {
+              id:item.id, nome:item.name, url:item.url,
+              projetista: v["person"]||"—",
+              status: STATUS_MAP_B[v["color_mm0as2nc"]||""] || v["color_mm0as2nc"] || "",
+              valor, cabos, cto8, cto16, totalCto, portas,
+              clientes, atendidos, postes, ajustado,
+              valorPorPorta:    portas>0 ? valor/portas : 0,
+              valorPorCliente:  clientes>0 ? valor/clientes : 0,
+              portaAjustada:    portas>0 ? ajustado/portas : 0,
+            };
           });
           setData(items);
           setMsg(`✅ ${items.length} projetos · ${new Date().toLocaleString("pt-BR")}`);
@@ -636,7 +643,7 @@
         setLoading(false);
       };
 
-      const allStatuses = data ? [...new Set(data.map(p=>p.status))].sort() : [];
+      const allStatuses = data ? [...new Set(data.map(p=>p.status))].filter(Boolean).sort() : [];
       const filtered = (data||[])
         .filter(p=>statusF==="all"||p.status===statusF)
         .filter(p=>!search||p.nome.toLowerCase().includes(search.toLowerCase())||p.projetista.toLowerCase().includes(search.toLowerCase()));
@@ -647,33 +654,39 @@
       });
 
       const sort = col => setSortCfg(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}));
-      const Th = ({col,label}) => (
-        <th onClick={()=>sort(col)} style={{padding:"10px 10px",textAlign:"left",color:"#555",fontWeight:700,
-          borderBottom:"2px solid #eee",whiteSpace:"nowrap",cursor:"pointer",userSelect:"none"}}>
-          {label}{sortCfg.col===col?(sortCfg.dir==="asc"?" ▲":" ▼"):" ⇅"}
+      const ico = col => sortCfg.col===col?(sortCfg.dir==="asc"?" ▲":" ▼"):" ⇅";
+      const Th = ({col,label,align="left",color="#555"}) => (
+        <th onClick={()=>sort(col)} style={{padding:"9px 8px",textAlign:align,color,fontWeight:700,
+          borderBottom:"2px solid #eee",whiteSpace:"nowrap",cursor:"pointer",userSelect:"none",
+          background:"#f8f9fb",fontSize:11}}>
+          {label}{ico(col)}
         </th>
       );
 
-      const totV=sorted.reduce((s,p)=>s+p.valor,0);
-      const totA=sorted.reduce((s,p)=>s+p.ajustado,0);
-      const totP=sorted.reduce((s,p)=>s+p.portas,0);
-      const totC=sorted.reduce((s,p)=>s+p.clientes,0);
-      const totPo=sorted.reduce((s,p)=>s+p.postes,0);
+      const totals = sorted.reduce((acc,p)=>{
+        acc.valor+=p.valor; acc.ajustado+=p.ajustado; acc.portas+=p.portas;
+        acc.clientes+=p.clientes; acc.atendidos+=p.atendidos; acc.postes+=p.postes;
+        acc.cabos+=p.cabos; acc.totalCto+=p.totalCto;
+        return acc;
+      },{valor:0,ajustado:0,portas:0,clientes:0,atendidos:0,postes:0,cabos:0,totalCto:0});
+
+      const fmtR = v => v>0 ? fmt(v) : "—";
+      const fmtI = v => v>0 ? fmtN(v) : "—";
 
       return (
         <div style={{padding:20}}>
           <div style={{marginBottom:12}}>
             <div style={{fontSize:20,fontWeight:800,color:"#1f1f1f"}}>📊 Board Monday — Visão Completa</div>
-            <div style={{fontSize:11,color:"#888",marginTop:3}}>Dados ao vivo direto do Monday.com</div>
+            <div style={{fontSize:11,color:"#888",marginTop:3}}>Dados ao vivo direto do Monday.com · Todos os campos financeiros e operacionais</div>
           </div>
+
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
             <button onClick={load} disabled={loading}
               style={{display:"flex",alignItems:"center",gap:8,padding:"10px 22px",borderRadius:10,
                 border:"none",background:loading?"#aaa":"#0073ea",color:"#fff",fontWeight:700,fontSize:13,
                 cursor:loading?"not-allowed":"pointer",boxShadow:"0 2px 8px rgba(0,115,234,0.3)"}}>
-              {loading
-                ? <><span style={{display:"inline-block",width:14,height:14,border:"2px solid #fff",
-                    borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/> Carregando...</>
+              {loading ? <><span style={{display:"inline-block",width:14,height:14,border:"2px solid #fff",
+                  borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/> Carregando...</>
                 : <><span>🔄</span> Carregar do Monday</>}
             </button>
             {msg && <span style={{fontSize:11,fontWeight:600,color:msg.startsWith("✅")?"#00c875":"#e2445c"}}>{msg}</span>}
@@ -700,71 +713,90 @@
               <span style={{fontSize:11,color:"#aaa"}}>{sorted.length} projeto{sorted.length!==1?"s":""}</span>
             </div>
 
-            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-              {[["📁","Projetos",String(sorted.length),statusF==="all"?"todos":statusF,"#0073ea"],
-                ["💰","Valor",fmt(totV),"soma","#ff642e"],
-                ["✅","Vl. Ajustado",totA>0?fmt(totA):"—","sem MO/postes","#00c875"],
-                ["🔌","Portas",String(totP),"CTOs","#03c4eb"],
-                ["👥","Clientes",String(totC),"total","#a25ddc"],
-                ["🪝","Postes",String(totPo),"implantação","#fdab3d"],
+            {/* KPI Cards */}
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+              {[
+                ["📁","Projetos",String(sorted.length),statusF==="all"?"todos":statusF,"#0073ea"],
+                ["💰","Valor Total",fmtR(totals.valor),"","#ff642e"],
+                ["✅","Vl. Ajustado",totals.ajustado>0?fmt(totals.ajustado):"—","","#00c875"],
+                ["🔌","Portas",fmtI(totals.portas),"","#03c4eb"],
+                ["📦","CTOs",fmtI(totals.totalCto),"","#a25ddc"],
+                ["👥","Clientes",fmtI(totals.clientes),"cluster","#579bfc"],
+                ["✅","Atendidos",fmtI(totals.atendidos),"p/projeto","#00c875"],
+                ["🪝","Postes",fmtI(totals.postes),"","#fdab3d"],
               ].map(([icon,label,value,sub,color])=>(
-                <div key={label} style={{background:"#fff",borderRadius:14,padding:"13px 16px",
-                  boxShadow:"0 2px 10px rgba(0,0,0,0.07)",borderLeft:`4px solid ${color}`,flex:1,minWidth:100}}>
-                  <div style={{fontSize:10,color:"#999",marginBottom:2}}>{icon} {label}</div>
-                  <div style={{fontSize:20,fontWeight:800,color}}>{value}</div>
-                  <div style={{fontSize:10,color:"#bbb"}}>{sub}</div>
+                <div key={label} style={{background:"#fff",borderRadius:12,padding:"12px 14px",
+                  boxShadow:"0 2px 8px rgba(0,0,0,0.06)",borderLeft:`3px solid ${color}`,flex:1,minWidth:90}}>
+                  <div style={{fontSize:9,color:"#999",marginBottom:1}}>{icon} {label}</div>
+                  <div style={{fontSize:18,fontWeight:800,color}}>{value}</div>
+                  {sub && <div style={{fontSize:9,color:"#bbb"}}>{sub}</div>}
                 </div>
               ))}
             </div>
 
+            {/* Tabela */}
             <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)",overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
                 <thead>
-                  <tr style={{background:"#f8f9fb"}}>
-                    <th style={{padding:"10px 8px",color:"#bbb",fontWeight:700,borderBottom:"2px solid #eee",width:30}}>#</th>
+                  <tr>
+                    <th style={{padding:"9px 8px",background:"#f8f9fb",color:"#bbb",fontWeight:700,borderBottom:"2px solid #eee",width:28}}>
+                      #
+                    </th>
                     <Th col="nome" label="Projeto"/>
                     <Th col="projetista" label="Projetista"/>
                     <Th col="status" label="Status"/>
-                    <Th col="portas" label="Portas"/>
-                    <Th col="clientes" label="Clientes"/>
-                    <Th col="postes" label="Postes"/>
-                    <Th col="cabos" label="Cabos (m)"/>
-                    <Th col="valor" label="Valor"/>
-                    <Th col="valorPorPorta" label="R$/Porta"/>
-                    <Th col="ajustado" label="Vl. Ajustado"/>
+                    <Th col="totalCto" label="CTOs" align="center" color="#a25ddc"/>
+                    <Th col="portas" label="Portas" align="center" color="#03c4eb"/>
+                    <Th col="cabos" label="Cabos (m)" align="center" color="#0073ea"/>
+                    <Th col="clientes" label="Clientes" align="center" color="#579bfc"/>
+                    <Th col="atendidos" label="Atendidos" align="center" color="#00c875"/>
+                    <Th col="postes" label="Postes" align="center" color="#fdab3d"/>
+                    <Th col="valor" label="Valor" align="right" color="#ff642e"/>
+                    <Th col="valorPorPorta" label="R$/Porta" align="right" color="#ff642e"/>
+                    <Th col="valorPorCliente" label="R$/Cliente" align="right" color="#ff642e"/>
+                    <Th col="ajustado" label="Vl. Ajustado" align="right" color="#00c875"/>
+                    <Th col="portaAjustada" label="Porta Ajust." align="right" color="#00c875"/>
                   </tr>
                 </thead>
                 <tbody>
-                  {sorted.length===0 && <tr><td colSpan={11} style={{padding:30,textAlign:"center",color:"#aaa"}}>Nenhum resultado</td></tr>}
+                  {sorted.length===0 && <tr><td colSpan={15} style={{padding:30,textAlign:"center",color:"#aaa"}}>Nenhum resultado</td></tr>}
                   {sorted.map((p,i)=>(
                     <tr key={p.id} onClick={()=>window.open(p.url,"_blank")}
                       style={{background:i%2===0?"#fff":"#fafafa",cursor:"pointer"}}
                       onMouseEnter={e=>e.currentTarget.style.background="#f0f7ff"}
                       onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"#fff":"#fafafa"}>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",color:"#ccc"}}>{i+1}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:240}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nome}</div></td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",color:"#666",whiteSpace:"nowrap"}}>{p.projetista}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0"}}><span style={{background:statusColorMap[p.status]||"#ccc",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.status||"—"}</span></td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#03c4eb"}}>{p.portas||"—"}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#666"}}>{p.clientes||"—"}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#fdab3d",fontWeight:600}}>{p.postes||"—"}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#0073ea"}}>{p.cabos?fmtN(p.cabos):"—"}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:700,color:"#ff642e",whiteSpace:"nowrap"}}>{p.valor>0?fmt(p.valor):"—"}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#888",whiteSpace:"nowrap"}}>{p.valorPorPorta>0?fmt(p.valorPorPorta):"—"}</td>
-                      <td style={{padding:"8px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:700,color:"#00c875",whiteSpace:"nowrap"}}>{p.ajustado>0?fmt(p.ajustado):"—"}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",color:"#ccc",textAlign:"center"}}>{i+1}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:220}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nome}</div></td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",color:"#666",whiteSpace:"nowrap"}}>{p.projetista}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0"}}><span style={{background:statusColorMap[p.status]||"#ccc",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.status||"—"}</span></td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#a25ddc"}}>{fmtI(p.totalCto)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#03c4eb"}}>{fmtI(p.portas)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#0073ea"}}>{p.cabos?fmtN(p.cabos):"—"}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#579bfc"}}>{fmtI(p.clientes)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#00c875",fontWeight:600}}>{fmtI(p.atendidos)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#fdab3d",fontWeight:600}}>{fmtI(p.postes)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:700,color:"#ff642e",whiteSpace:"nowrap"}}>{fmtR(p.valor)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#e2445c",whiteSpace:"nowrap"}}>{p.valorPorPorta>0?fmt(p.valorPorPorta):"—"}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#e2445c",whiteSpace:"nowrap"}}>{p.valorPorCliente>0?fmt(p.valorPorCliente):"—"}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",fontWeight:700,color:"#00c875",whiteSpace:"nowrap"}}>{fmtR(p.ajustado)}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"right",color:"#00c875",whiteSpace:"nowrap"}}>{p.portaAjustada>0?fmt(p.portaAjustada):"—"}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{background:"#f0f7ff",fontWeight:800}}>
-                    <td colSpan={4} style={{padding:"9px 8px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({sorted.length})</td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#03c4eb"}}>{fmtN(totP)}</td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#666"}}>{fmtN(totC)}</td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#fdab3d"}}>{fmtN(totPo)}</td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd"}}></td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#ff642e"}}>{fmt(totV)}</td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd"}}></td>
-                    <td style={{padding:"9px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{totA>0?fmt(totA):"—"}</td>
+                    <td colSpan={4} style={{padding:"8px 8px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({sorted.length})</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#a25ddc"}}>{fmtN(totals.totalCto)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#03c4eb"}}>{fmtN(totals.portas)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#0073ea"}}>{fmtN(totals.cabos)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#579bfc"}}>{fmtN(totals.clientes)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#00c875"}}>{fmtN(totals.atendidos)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#fdab3d"}}>{fmtN(totals.postes)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#ff642e"}}>{fmt(totals.valor)}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#e2445c"}}>{totals.portas>0?fmt(totals.valor/totals.portas):"—"}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#e2445c"}}>{totals.clientes>0?fmt(totals.valor/totals.clientes):"—"}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{totals.ajustado>0?fmt(totals.ajustado):"—"}</td>
+                    <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"right",color:"#00c875"}}>{totals.portas>0&&totals.ajustado>0?fmt(totals.ajustado/totals.portas):"—"}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -775,12 +807,13 @@
             <div style={{background:"#f8f9fb",borderRadius:14,padding:40,textAlign:"center",color:"#aaa"}}>
               <div style={{fontSize:40,marginBottom:12}}>📊</div>
               <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>Clique em "Carregar do Monday"</div>
-              <div style={{fontSize:12}}>Busca todos os projetos com status, valores, portas e mais</div>
+              <div style={{fontSize:12}}>Busca todos os projetos com status, valores, portas, CTOs, clientes e mais</div>
             </div>
           )}
         </div>
       );
     }
+
 
     function App() {
       const [modulo, setModulo] = useState("dashboard");
