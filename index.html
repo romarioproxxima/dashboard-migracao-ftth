@@ -545,11 +545,6 @@
               <span><span style={{ display:"inline-block", width:12, height:10, background:"#ffe0e0", border:"1px solid #ffb3b3", borderRadius:2, marginRight:4 }} />Feriado</span>
               <span><span style={{ display:"inline-block", width:2, height:10, background:"#e2445c", marginRight:4 }} />Hoje (10/04)</span>
             </div>
-            {/* ══ BOARD MONDAY LIVE ══ */}
-            {modulo === "boardlive" && (
-              <BoardMonday fmt={fmt} fmtN={fmtN} statusColorMap={statusColorMap} />
-            )}
-
           </div>
         </div>
       );
@@ -1888,3 +1883,8 @@
   </script>
 </body>
 </html>
+            {/* ══ BOARD MONDAY LIVE ══ */}
+            {modulo === "boardlive" && (
+              <BoardMonday fmt={fmt} fmtN={fmtN} statusColorMap={statusColorMap} />
+            )}
+
