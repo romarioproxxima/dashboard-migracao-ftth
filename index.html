@@ -222,7 +222,9 @@
     const totalValorOriginal = 6987753.66;
     const PCOLORS = ["#0073ea","#00c875","#e2445c","#fdab3d","#a25ddc","#ff642e","#579bfc","#03c4eb"];
 
-    const projetos = mondayProjetos.map(p => ({
+    // Usa dados ao vivo se disponíveis (botão atualizar da 1ª aba), caso contrário usa hardcoded
+    const projetosSource = liveDashData || mondayProjetos;
+    const projetos = projetosSource.map(p => ({
       ...p,
       qtdClusters: p.clusters.length,
       clientesPlanilha: p.clientes || 0,
@@ -823,6 +825,10 @@
       const [search, setSearch] = useState("");
       const [fStatus, setFStatus] = useState("all");
       const [fStatusAjust, setFStatusAjust] = useState("all");
+      // Dashboard Live states
+      const [liveDashData, setLiveDashData] = useState(null);
+      const [dashLoading, setDashLoading] = useState(false);
+      const [dashMsg, setDashMsg] = useState("");
       // Board Live: states moved into BoardMonday component
       const [liveAjustados, setLiveAjustados] = useState(null);
       const [loadingAjust, setLoadingAjust] = useState(false);
@@ -899,7 +905,80 @@
         setLoadingAjust(false);
       };
 
-            const tabBtn = (val, cur, set, label) => (
+            // ─── FETCH DASHBOARD LIVE ────────────────────────────────────────────────────
+      const fetchDashboard = async () => {
+        setDashLoading(true); setDashMsg("");
+        try {
+          const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61"];
+          const q = "query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }";
+          const res = await fetch("https://api.monday.com/v2",{
+            method:"POST",
+            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
+            body:JSON.stringify({query:q})
+          });
+          const js = await res.json();
+          if(!js.data) throw new Error(js.errors?.[0]?.message||"Erro API");
+          const STATUS_MAP_D = {
+            "Em desenvolvimento":"Em desenvolvimento","Aguardando vistoria":"Aguardando vistoria",
+            "Vistoria Concluída":"Vistoria concluída","Avaliação do supervisor":"Avaliação supervisor",
+            "Avaliação coordenador":"Avaliação coordenador","Avaliação gerencia":"Avaliação gerência",
+            "Aguardando Aprovação diretoria":"Aguard. aprovação diretoria","Em correção":"Em correção",
+            "Projetado":"Projetado","Pausado":"Pausado","Em Ajuste":"Em Ajuste",
+            "Em Revisão":"Em Revisão","Reprovado":"Reprovado",
+          };
+          const extractClusters = name => {
+            const nums = (name.match(/\b(\d{1,3})\b/g)||[]).map(Number).filter(n=>n>=1&&n<=999);
+            return nums.length>0?nums:[0];
+          };
+          const extractCidade = name => {
+            const m = name.match(/-\s*([^-]+?)\s*-\s*[A-Z]{2}(\s*\(copy\))?\s*$/);
+            return m?m[1].trim():name.substring(0,30);
+          };
+          const mapProjetista = p => {
+            if(!p) return "—";
+            const lp=p.toLowerCase();
+            if(lp.includes("romario")||lp.includes("proxxima.net")) return "Romário";
+            if(lp.includes("jose mauricio")&&lp.includes("rafael")) return "Jose Mauricio / Rafael";
+            if(lp.includes("aluisio")&&lp.includes("yuri")) return "Aluisio Felix / Yuri";
+            if((lp.includes("joão victor")||lp.includes("joao victor"))&&lp.includes("yuri")) return "João Victor / Yuri";
+            if(lp.includes("brendo")&&lp.includes("jheydson")) return "Brendo / Jheydson";
+            if(lp.includes("jheydson")&&lp.includes("aluisio")) return "Jheydson / Aluisio Felix";
+            if(lp.includes("jheydson")&&lp.includes("yuri")) return "Yuri / Jheydson";
+            if(lp.includes("joão victor")||lp.includes("joao victor")) return "João Victor";
+            if(lp.includes("yuri")) return "Yuri";
+            if(lp.includes("aluisio")) return "Aluisio Felix";
+            if(lp.includes("jheydson")) return "Jheydson";
+            if(lp.includes("brendo")) return "Brendo";
+            if(lp.includes("rafael")) return "Rafael Paiva";
+            return p;
+          };
+          const newData = js.data.boards[0].items_page.items.map(item => {
+            const v={};
+            item.column_values.forEach(cv=>{v[cv.id]=cv.text;});
+            const valor=parseFloat(v["numeric_mm0fhmyb"])||0;
+            const awjmt=parseFloat(v["numeric_mm0awjmt"])||0;
+            const fach=parseFloat(v["numeric_mm0fach"])||0;
+            const portas=awjmt*8+fach*16;
+            const clientes=parseFloat(v["numeric_mm0fpr61"])||0;
+            const statusRaw=v["color_mm0as2nc"]||"";
+            return {
+              nome:item.name,
+              clusters:extractClusters(item.name),
+              cidade:extractCidade(item.name),
+              status:STATUS_MAP_D[statusRaw]||statusRaw,
+              projetista:mapProjetista(v["person"]),
+              valor, portas, clientes
+            };
+          });
+          setLiveDashData(newData);
+          setDashMsg(`✅ ${newData.length} projetos · ${new Date().toLocaleString("pt-BR")}`);
+        } catch(e) {
+          setDashMsg("❌ "+e.message);
+        }
+        setDashLoading(false);
+      };
+
+      const tabBtn = (val, cur, set, label) => (
         <button key={val} onClick={() => set(val)} style={{ padding:"7px 16px", borderRadius:20, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background:cur===val?"#0073ea":"#fff", color:cur===val?"#fff":"#555", boxShadow:"0 1px 4px rgba(0,0,0,0.08)" }}>{label}</button>
       );
 
@@ -919,7 +998,21 @@
             {modulo === "dashboard" && (
               <div>
                 <div style={{ marginBottom:16 }}>
-                  <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
+                    <div style={{ fontSize:20, fontWeight:800, color:"#1f1f1f" }}>Visão Geral dos Projetos</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+                      <button onClick={fetchDashboard} disabled={dashLoading}
+                        style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 18px", borderRadius:10,
+                          border:"none", background:dashLoading?"#aaa":"#0073ea", color:"#fff", fontWeight:700,
+                          fontSize:12, cursor:dashLoading?"not-allowed":"pointer", boxShadow:"0 2px 6px rgba(0,115,234,0.3)" }}>
+                        {dashLoading
+                          ? <><span style={{ display:"inline-block", width:12, height:12, border:"2px solid #fff", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/> Atualizando...</>
+                          : <><span>🔄</span> Atualizar do Monday</>}
+                      </button>
+                      {dashMsg && <span style={{ fontSize:11, fontWeight:600, color:dashMsg.startsWith("✅")?"#00c875":"#e2445c" }}>{dashMsg}</span>}
+                      {liveDashData && <span style={{ fontSize:10, color:"#00c875", fontWeight:600 }}>🟢 Dados ao vivo</span>}
+                    </div>
+                  </div>
                   <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 13/05/2026</div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
