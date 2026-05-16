@@ -714,6 +714,7 @@
                 ["📁","Projetos",String(sorted.length),statusF==="all"?"todos":statusF,"#0073ea"],
                 ["💰","Valor Total",fmtR(totals.valor),"","#ff642e"],
                 ["✅","Vl. Ajustado",totals.ajustado>0?fmt(totals.ajustado):"—","","#00c875"],
+                ["💡","Ajust./Atendido",totals.atendidos>0&&totals.ajustado>0?fmt(totals.ajustado/totals.atendidos):"—","vl. ajust. ÷ atendidos","#e2445c"],
                 ["🔌","Portas",fmtI(totals.portas),"","#03c4eb"],
                 ["📦","CTOs",fmtI(totals.totalCto),"","#a25ddc"],
                 ["👥","Clientes",fmtI(totals.clientes),"cluster","#579bfc"],
@@ -738,7 +739,6 @@
                       #
                     </th>
                     {th("nome","Projeto")}
-                    {th("projetista","Projetista")}
                     {th("status","Status")}
                     {th("totalCto","CTOs","center","#a25ddc")}
                     {th("portas","Portas","center","#03c4eb")}
@@ -761,8 +761,7 @@
                       onMouseEnter={e=>e.currentTarget.style.background="#f0f7ff"}
                       onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"#fff":"#fafafa"}>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",color:"#ccc",textAlign:"center"}}>{i+1}</td>
-                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:220}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nome}</div></td>
-                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",color:"#666",whiteSpace:"nowrap"}}>{p.projetista}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:280}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nome}</div></td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0"}}><span style={{background:statusColorMap[p.status]||"#ccc",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.status||"—"}</span></td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#a25ddc"}}>{fmtI(p.totalCto)}</td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#03c4eb"}}>{fmtI(p.portas)}</td>
@@ -780,7 +779,7 @@
                 </tbody>
                 <tfoot>
                   <tr style={{background:"#f0f7ff",fontWeight:800}}>
-                    <td colSpan={4} style={{padding:"8px 8px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({sorted.length})</td>
+                    <td colSpan={3} style={{padding:"8px 8px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({sorted.length})</td>
                     <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#a25ddc"}}>{fmtN(totals.totalCto)}</td>
                     <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#03c4eb"}}>{fmtN(totals.portas)}</td>
                     <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#0073ea"}}>{fmtN(totals.cabos)}</td>
