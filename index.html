@@ -655,7 +655,8 @@
 
       const sort = col => setSortCfg(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}));
       const ico = col => sortCfg.col===col?(sortCfg.dir==="asc"?" ▲":" ▼"):" ⇅";
-      const Th = ({col,label,align="left",color="#555"}) => (
+      // th() called as function (not component) to avoid infinite re-render
+      const th = (col,label,align="left",color="#555") => (
         <th onClick={()=>sort(col)} style={{padding:"9px 8px",textAlign:align,color,fontWeight:700,
           borderBottom:"2px solid #eee",whiteSpace:"nowrap",cursor:"pointer",userSelect:"none",
           background:"#f8f9fb",fontSize:11}}>
@@ -742,20 +743,20 @@
                     <th style={{padding:"9px 8px",background:"#f8f9fb",color:"#bbb",fontWeight:700,borderBottom:"2px solid #eee",width:28}}>
                       #
                     </th>
-                    <Th col="nome" label="Projeto"/>
-                    <Th col="projetista" label="Projetista"/>
-                    <Th col="status" label="Status"/>
-                    <Th col="totalCto" label="CTOs" align="center" color="#a25ddc"/>
-                    <Th col="portas" label="Portas" align="center" color="#03c4eb"/>
-                    <Th col="cabos" label="Cabos (m)" align="center" color="#0073ea"/>
-                    <Th col="clientes" label="Clientes" align="center" color="#579bfc"/>
-                    <Th col="atendidos" label="Atendidos" align="center" color="#00c875"/>
-                    <Th col="postes" label="Postes" align="center" color="#fdab3d"/>
-                    <Th col="valor" label="Valor" align="right" color="#ff642e"/>
-                    <Th col="valorPorPorta" label="R$/Porta" align="right" color="#ff642e"/>
-                    <Th col="valorPorCliente" label="R$/Cliente" align="right" color="#ff642e"/>
-                    <Th col="ajustado" label="Vl. Ajustado" align="right" color="#00c875"/>
-                    <Th col="portaAjustada" label="Porta Ajust." align="right" color="#00c875"/>
+                    {th("nome","Projeto")}
+                    {th("projetista","Projetista")}
+                    {th("status","Status")}
+                    {th("totalCto","CTOs","center","#a25ddc")}
+                    {th("portas","Portas","center","#03c4eb")}
+                    {th("cabos","Cabos (m)","center","#0073ea")}
+                    {th("clientes","Clientes","center","#579bfc")}
+                    {th("atendidos","Atendidos","center","#00c875")}
+                    {th("postes","Postes","center","#fdab3d")}
+                    {th("valor","Valor","right","#ff642e")}
+                    {th("valorPorPorta","R$/Porta","right","#ff642e")}
+                    {th("valorPorCliente","R$/Cliente","right","#ff642e")}
+                    {th("ajustado","Vl. Ajustado","right","#00c875")}
+                    {th("portaAjustada","Porta Ajust.","right","#00c875")}
                   </tr>
                 </thead>
                 <tbody>
