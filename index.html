@@ -1872,8 +1872,12 @@
               </div>
             )}
 
+            {/* ══ BOARD MONDAY LIVE ══ */}
+            {modulo === "boardlive" && (
+              <BoardMonday fmt={fmt} fmtN={fmtN} statusColorMap={statusColorMap} />
+            )}
 
-                      </div>
+          </div>
         </div>
       );
     }
