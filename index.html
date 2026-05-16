@@ -222,9 +222,7 @@
     const totalValorOriginal = 6987753.66;
     const PCOLORS = ["#0073ea","#00c875","#e2445c","#fdab3d","#a25ddc","#ff642e","#579bfc","#03c4eb"];
 
-    // Usa dados ao vivo se disponíveis (botão atualizar da 1ª aba), caso contrário usa hardcoded
-    const projetosSource = liveDashData || mondayProjetos;
-    const projetos = projetosSource.map(p => ({
+    const projetos = mondayProjetos.map(p => ({
       ...p,
       qtdClusters: p.clusters.length,
       clientesPlanilha: p.clientes || 0,
@@ -836,13 +834,18 @@
       const [ajustLastUpdate, setAjustLastUpdate] = useState(null);
       const [liveStatuses, setLiveStatuses] = useState(null); // {nome: statusMapped}
 
-      const filtered = projetos.filter(p => {
+      // dashProjetos: usa dados ao vivo se disponível, senão usa dados hardcoded
+      const dashProjetos = liveDashData
+        ? liveDashData.map(p=>({...p, qtdClusters:p.clusters.length, clientesPlanilha:p.clientes||0}))
+        : projetos;
+
+      const filtered = dashProjetos.filter(p => {
         const ms = !search || p.nome.toLowerCase().includes(search.toLowerCase()) || p.projetista.toLowerCase().includes(search.toLowerCase()) || p.cidade.toLowerCase().includes(search.toLowerCase());
         return ms && (fStatus === "all" || p.status === fStatus);
       });
-      const porStatus = PIPELINE.map(s => ({ ...s, items: projetos.filter(p => p.status === s.status) }));
+      const porStatus = PIPELINE.map(s => ({ ...s, items: dashProjetos.filter(p => p.status === s.status) }));
       const porProj = {};
-      projetos.forEach(p => {
+      dashProjetos.forEach(p => {
         const k = p.projetista || "Sem projetista";
         if (!porProj[k]) porProj[k] = { count:0, clusters:0, valor:0, clientes:0 };
         porProj[k].count++; porProj[k].clusters += p.qtdClusters; porProj[k].valor += p.valor; porProj[k].clientes += p.clientesPlanilha;
@@ -1057,7 +1060,7 @@
                       };
                       const pipelineUF = {};
                       UFS.forEach(u => { pipelineUF[u] = 0; });
-                      projetos.forEach(p => {
+                      dashProjetos.forEach(p => {
                         p.clusters.forEach(c => {
                           const u = clusterUF[c];
                           if (u && pipelineUF[u] !== undefined) pipelineUF[u]++;
@@ -1373,7 +1376,7 @@
 
               // Projetista stats by project
               const statsProj = {};
-              projetos.forEach(p => {
+              dashProjetos.forEach(p => {
                 const nomes = p.projetista === "—" ? ["Sem projetista"] : p.projetista.split(" / ");
                 nomes.forEach(n => {
                   if (!statsProj[n]) statsProj[n] = { projetos:0, clusters:0, valor:0, portas:0, clientes:0 };
