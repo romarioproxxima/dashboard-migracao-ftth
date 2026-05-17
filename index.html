@@ -154,14 +154,15 @@
         return;
       }
 
-      // 2. Check saved token
+      // 2. Check saved token (with or without saved user)
       const savedToken = localStorage.getItem(AUTH_KEY);
-      const savedUser = localStorage.getItem(USER_KEY);
-      if (savedToken && savedUser) {
+      if (savedToken) {
         try {
           const user = await verifyToken(savedToken);
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
           showDashboard(user);
         } catch(e) {
+          // Token expirado ou inválido, limpa e mostra login
           localStorage.removeItem(AUTH_KEY);
           localStorage.removeItem(USER_KEY);
         }
