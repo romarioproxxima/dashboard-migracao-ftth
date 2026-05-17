@@ -96,7 +96,7 @@
       window.location.href = url;
     }
 
-    async function verifyToken(token) {
+    function verifyToken(token) {
       // O próprio fluxo OAuth prova que o usuário tem conta Zoho válida.
       // Tenta decodificar o JWT para obter nome/email, se falhar usa dados genéricos.
       try {
@@ -132,38 +132,37 @@
       el.style.display = "block";
     }
 
-    async function initAuth() {
-      // 1. Check URL hash for token (coming back from Zoho)
+    function initAuth() {
+      // 1. Token no hash da URL (retorno do Zoho OAuth)
       const hash = window.location.hash.substring(1);
       const params = new URLSearchParams(hash);
       const accessToken = params.get("access_token");
 
       if (accessToken) {
-        // Clear hash from URL
         history.replaceState(null, "", window.location.pathname + window.location.search);
-        try {
-          const user = await verifyToken(accessToken);
-          localStorage.setItem(AUTH_KEY, accessToken);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          showDashboard(user);
-        } catch(e) {
-          showError(e.message);
-        }
+        const user = verifyToken(accessToken);
+        localStorage.setItem(AUTH_KEY, accessToken);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        showDashboard(user);
         return;
       }
 
-      // 2. Check saved token (with or without saved user)
+      // 2. Token salvo no localStorage
       const savedToken = localStorage.getItem(AUTH_KEY);
-      if (savedToken) {
+      const savedUser = localStorage.getItem(USER_KEY);
+      if (savedToken && savedUser) {
         try {
-          const user = await verifyToken(savedToken);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
+          const user = JSON.parse(savedUser);
           showDashboard(user);
         } catch(e) {
-          // Token expirado ou inválido, limpa e mostra login
           localStorage.removeItem(AUTH_KEY);
           localStorage.removeItem(USER_KEY);
         }
+      } else if (savedToken) {
+        // Token sem user — re-gera user e mostra
+        const user = verifyToken(savedToken);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        showDashboard(user);
       }
     }
 
