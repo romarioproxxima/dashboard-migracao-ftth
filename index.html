@@ -726,9 +726,17 @@
 
     // ─── BOARD MONDAY COMPONENT ──────────────────────────────────────────────────
     function BoardMonday({ fmt, fmtN, statusColorMap }) {
-      const [data, setData] = useState(null);
+      const [data, setData] = useState(() => {
+        try {
+          const s = localStorage.getItem("proxxima_board_live_data");
+          return s ? JSON.parse(s) : null;
+        } catch(e) { return null; }
+      });
       const [loading, setLoading] = useState(false);
-      const [msg, setMsg] = useState("");
+      const [msg, setMsg] = useState(() => {
+        const d = localStorage.getItem("proxxima_board_live_date");
+        return d ? `✅ Cache · ${d}` : "";
+      });
       const [search, setSearch] = useState("");
       const [statusF, setStatusF] = useState("all");
       const [sortCfg, setSortCfg] = useState({col:"nome",dir:"asc"});
@@ -741,6 +749,12 @@
         "Projetado":"Projetado","Pausado":"Pausado","Em Ajuste":"Em Ajuste",
         "Em Revisão":"Em Revisão","Reprovado":"Reprovado",
       };
+
+      // Auto-atualiza quando o componente abre (se já tiver cache)
+      useEffect(() => {
+        const cached = localStorage.getItem("proxxima_board_live_data");
+        if (cached) load(); // já tem dados — atualiza silenciosamente
+      }, []);
 
       const load = async () => {
         setLoading(true); setMsg("");
@@ -785,13 +799,17 @@
               portaAjustada:    portas>0 ? ajustado/portas : 0,
             };
           });
+          try {
+            localStorage.setItem("proxxima_board_live_data", JSON.stringify(newData));
+            localStorage.setItem("proxxima_board_live_date", new Date().toLocaleString("pt-BR"));
+          } catch(e) {}
           setData(newData);
           setMsg(`✅ ${newData.length} projetos · ${new Date().toLocaleString("pt-BR")}`);
         } catch(e) {
           setMsg("❌ "+e.message);
         }
         setLoading(false);
-      };
+      };  // end load
 
       const allStatuses = data ? [...new Set(data.map(p=>p.status))].filter(Boolean).sort() : [];
       const filtered = (data||[])
