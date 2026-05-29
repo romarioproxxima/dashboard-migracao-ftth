@@ -1551,7 +1551,7 @@
               const projSemValor = projetos.filter(p => p.valor === 0).length;
               const valorMedioProj = dashTotalValor / projComValor;
               const portasMedioProj = dashTotalPortas / totalProj;
-              const clientesMedioProj = totalClientes / totalProj;
+              const clientesMedioProj = dashTotalClientes / totalProj;
 
               // Status por projeto (não por cluster)
               const statusProj = PIPELINE.map(s => ({
@@ -1853,7 +1853,7 @@
                 <GanttUnificado />
                 {/* Seletor de seção para detalhes */}
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-                  {[["projetos","🏗️ Elaboração",`${totalAProjetar} clusters`,"#0073ea"],["vistoria","🔍 Vistoria",`${TOTAL_VISTORIA} vistorias`,"#00c875"],["avaliacao","📋 Avaliação",`${AVAL_DIAS} dias/proj`,"#fdab3d"]].map(([sec,lbl,qtd,cor]) => (
+                  {[["projetos","🏗️ Elaboração",`${dashTotalAProjetar} clusters`,"#0073ea"],["vistoria","🔍 Vistoria",`${TOTAL_VISTORIA} vistorias`,"#00c875"],["avaliacao","📋 Avaliação",`${AVAL_DIAS} dias/proj`,"#fdab3d"]].map(([sec,lbl,qtd,cor]) => (
                     <button key={sec} onClick={() => setCronSec(sec)} style={{ padding:"8px 18px", borderRadius:10, border:`2px solid ${cronSec===sec?cor:"#e0e0e0"}`, cursor:"pointer", fontWeight:700, fontSize:12, background:cronSec===sec?cor:"#fff", color:cronSec===sec?"#fff":"#555", display:"flex", alignItems:"center", gap:8 }}>
                       {lbl}
                       <span style={{ background:cronSec===sec?"rgba(255,255,255,0.25)":"#f0f0f0", color:cronSec===sec?"#fff":"#888", borderRadius:20, padding:"1px 8px", fontSize:10, fontWeight:700 }}>{qtd}</span>
@@ -2009,7 +2009,7 @@
                 </div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                   {[
-                    { label:"Total a vistoriar", value:String(TOTAL_VISTORIA), sub:`${jaAguardando.length} pipeline + ${totalAProjetar} a projetar`, color:"#e2445c", icon:"🔍" },
+                    { label:"Total a vistoriar", value:String(TOTAL_VISTORIA), sub:`${jaAguardando.length} pipeline + ${dashTotalAProjetar} a projetar`, color:"#e2445c", icon:"🔍" },
                     { label:"Vistorias/dia", value:"6", sub:"média diária", color:"#0073ea", icon:"📋" },
                     { label:"Dias úteis", value:String(nDiasVist), sub:"desc. feriados", color:"#fdab3d", icon:"📆" },
                     { label:"Início", value:"08/04", sub:"2026", color:"#579bfc", icon:"🚀" },
