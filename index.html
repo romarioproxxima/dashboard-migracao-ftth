@@ -1546,9 +1546,9 @@
 
             {/* ══ POR PROJETO ══ */}
             {modulo === "porprojeto" && (() => {
-              const totalProj = projetos.length;
-              const projComValor = projetos.filter(p => p.valor > 0).length;
-              const projSemValor = projetos.filter(p => p.valor === 0).length;
+              const totalProj = dashProjetos.length;
+              const projComValor = dashProjetos.filter(p => p.valor > 0).length;
+              const projSemValor = dashProjetos.filter(p => p.valor === 0).length;
               const valorMedioProj = dashTotalValor / projComValor;
               const portasMedioProj = dashTotalPortas / totalProj;
               const clientesMedioProj = dashTotalClientes / totalProj;
@@ -1556,9 +1556,9 @@
               // Status por projeto (não por cluster)
               const statusProj = PIPELINE.map(s => ({
                 ...s,
-                qtd: projetos.filter(p => p.status === s.status).length,
-                valor: projetos.filter(p => p.status === s.status).reduce((a,p) => a+p.valor, 0),
-                portas: projetos.filter(p => p.status === s.status).reduce((a,p) => a+p.portas, 0),
+                qtd: dashProjetos.filter(p => p.status === s.status).length,
+                valor: dashProjetos.filter(p => p.status === s.status).reduce((a,p) => a+p.valor, 0),
+                portas: dashProjetos.filter(p => p.status === s.status).reduce((a,p) => a+p.portas, 0),
               })).filter(s => s.qtd > 0);
 
               // Projetista stats by project
@@ -1579,7 +1579,7 @@
               const topValor = [...projetos].sort((a,b) => b.valor - a.valor).slice(0, 10);
 
               // Projetos sem valor
-              const semValorList = projetos.filter(p => p.valor === 0);
+              const semValorList = dashProjetos.filter(p => p.valor === 0);
 
               // Sorted/filtered table
               const ppFiltered = [...projetos]
@@ -1616,7 +1616,7 @@
                         <StatCard icon="📊" label="Valor Médio/Projeto" value={fmt(valorMedioProj)} sub="entre os com valor" color="#a25ddc" />
                         <StatCard icon="🔌" label="Portas Médio/Proj" value={Math.round(portasMedioProj).toString()} sub="portas por projeto" color="#03c4eb" />
                         <StatCard icon="👥" label="Clientes Médio/Proj" value={Math.round(clientesMedioProj).toString()} sub="clientes por projeto" color="#00c875" />
-                        <StatCard icon="📐" label="Clusters/Projeto" value={(projetos.reduce((s,p)=>s+p.qtdClusters,0)/totalProj).toFixed(1)} sub="média de clusters" color="#fdab3d" />
+                        <StatCard icon="📐" label="Clusters/Projeto" value={(dashProjetos.reduce((s,p)=>s+p.qtdClusters,0)/totalProj).toFixed(1)} sub="média de clusters" color="#fdab3d" />
                       </div>
 
                       {/* Status overview */}
@@ -1642,7 +1642,7 @@
 
                         <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
                           <div style={{ fontWeight:700, fontSize:14, marginBottom:14 }}>Top Cidades (projetos)</div>
-                          {Object.entries(projetos.reduce((acc, p) => { const c = p.cidade||"?"; acc[c] = (acc[c]||0)+1; return acc; }, {}))
+                          {Object.entries(dashProjetos.reduce((acc, p) => { const c = p.cidade||"?"; acc[c] = (acc[c]||0)+1; return acc; }, {}))
                             .sort((a,b) => b[1]-a[1]).slice(0,8).map(([c,n],i) => (
                             <div key={c} style={{ marginBottom:9 }}>
                               <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
@@ -1675,7 +1675,7 @@
                   {ppTab === "status" && (
                     <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                       {statusProj.map(s => {
-                        const items = projetos.filter(p => p.status === s.status).sort((a,b) => b.valor-a.valor);
+                        const items = dashProjetos.filter(p => p.status === s.status).sort((a,b) => b.valor-a.valor);
                         return (
                           <div key={s.status} style={{ background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
                             <div style={{ padding:"12px 18px", background:s.color, color:"#fff", fontWeight:700, fontSize:13, display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
@@ -1713,7 +1713,7 @@
                   {ppTab === "projetistas" && (
                     <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                       {Object.entries(statsProj).sort((a,b) => b[1].valor - a[1].valor).map(([nome, d], i) => {
-                        const meus = projetos.filter(p => p.projetista === nome || p.projetista.includes(nome));
+                        const meus = dashProjetos.filter(p => p.projetista === nome || p.projetista.includes(nome));
                         return (
                           <div key={nome} style={{ background:"#fff", borderRadius:14, padding:16, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
                             <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:12, flexWrap:"wrap" }}>
