@@ -748,15 +748,20 @@
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0a5pkz",
             "numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61","numeric_mm0fzxsd",
             "numeric_mm3bhenr","numeric_mm0fhb2h"];
-          const q = "query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name url column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }";
-          const res = await fetch("https://api.monday.com/v2",{
-            method:"POST",
-            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
-            body:JSON.stringify({query:q})
-          });
-          const js = await res.json();
-          if(!js.data) throw new Error(js.errors?.[0]?.message||"Erro API");
-          const newData = items.map(item => {
+          const hdrs = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"};
+          let allItemsB = []; let cursorB = null;
+          do {
+            const qB = !cursorB
+              ? "query { boards(ids:[18399019664]){ items_page(limit:100){ cursor items{ id name url column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }"
+              : 'query { next_items_page(limit:100, cursor:"' + cursorB + '"){ cursor items{ id name url column_values(ids:' + JSON.stringify(cols) + '){ id text } } } }';
+            const resB = await fetch("https://api.monday.com/v2",{method:"POST",headers:hdrs,body:JSON.stringify({query:qB})});
+            const jsB = await resB.json();
+            if(!jsB.data) throw new Error(jsB.errors?.[0]?.message||"Erro API");
+            const pageB = cursorB ? jsB.data.next_items_page : jsB.data.boards[0].items_page;
+            allItemsB = allItemsB.concat(pageB.items);
+            cursorB = pageB.cursor || null;
+          } while (cursorB);
+          const newData = allItemsB.map(item => {
             const v={};
             item.column_values.forEach(cv=>{v[cv.id]=cv.text;});
             const valor     = parseFloat(v["numeric_mm0fhmyb"])||0;
