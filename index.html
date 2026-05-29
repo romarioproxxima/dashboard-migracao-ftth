@@ -972,8 +972,14 @@
       const [search, setSearch] = useState("");
       const [fStatus, setFStatus] = useState("all");
       const [fStatusAjust, setFStatusAjust] = useState("all");
-      // Dashboard Live states
-      const [liveDashData, setLiveDashData] = useState(null);
+      // Dashboard Live states — inicializa do localStorage se disponível
+      const [liveDashData, setLiveDashData] = useState(() => {
+        try {
+          const saved = localStorage.getItem("proxxima_dash_live_data");
+          return saved ? JSON.parse(saved) : null;
+        } catch(e) { return null; }
+      });
+      const [liveDashDate, setLiveDashDate] = useState(() => localStorage.getItem("proxxima_dash_live_date") || null);
       const [dashLoading, setDashLoading] = useState(false);
       const [dashMsg, setDashMsg] = useState("");
       // Board Live: states moved into BoardMonday component
@@ -1132,6 +1138,13 @@
               valor, portas, clientes
             };
           });
+          // Salva no localStorage para persistir entre sessões
+          try {
+            localStorage.setItem("proxxima_dash_live_data", JSON.stringify(newData));
+            const dateStr = new Date().toLocaleString("pt-BR");
+            localStorage.setItem("proxxima_dash_live_date", dateStr);
+            setLiveDashDate(dateStr);
+          } catch(e) { console.warn("localStorage cheio, dados não persistidos"); }
           setLiveDashData(newData);
           setDashMsg(`✅ ${newData.length} projetos · ${new Date().toLocaleString("pt-BR")}`);
         } catch(e) {
@@ -1172,7 +1185,7 @@
                           : <><span>🔄</span> Atualizar do Monday</>}
                       </button>
                       {dashMsg && <span style={{ fontSize:11, fontWeight:600, color:dashMsg.startsWith("✅")?"#00c875":"#e2445c" }}>{dashMsg}</span>}
-                      {liveDashData && <span style={{ fontSize:10, color:"#00c875", fontWeight:600 }}>🟢 Dados ao vivo</span>}
+                      {liveDashData && <span style={{ fontSize:10, color:"#00c875", fontWeight:600 }}>🟢 Dados ao vivo{liveDashDate ? ` · ${liveDashDate}` : ""}</span>}
                     </div>
                   </div>
                   <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{TOTAL_CLUSTERS} clusters · Atualizado em 13/05/2026</div>
