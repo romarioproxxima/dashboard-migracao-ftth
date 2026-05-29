@@ -785,8 +785,8 @@
               portaAjustada:    portas>0 ? ajustado/portas : 0,
             };
           });
-          setData(items);
-          setMsg(`✅ ${items.length} projetos · ${new Date().toLocaleString("pt-BR")}`);
+          setData(newData);
+          setMsg(`✅ ${newData.length} projetos · ${new Date().toLocaleString("pt-BR")}`);
         } catch(e) {
           setMsg("❌ "+e.message);
         }
