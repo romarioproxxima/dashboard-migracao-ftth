@@ -117,6 +117,8 @@
       const badge = document.getElementById("user-badge");
       document.getElementById("user-name").textContent = "👤 " + (user.name || user.email);
       badge.classList.add("visible");
+      // Dispara evento para que o App busque dados do Monday
+      window.dispatchEvent(new CustomEvent("dashboardReady"));
     }
 
     function logout() {
@@ -1073,9 +1075,22 @@
         setLoadingAjust(false);
       };
 
-            // ─── FETCH DASHBOARD LIVE ────────────────────────────────────────────────────
-      const fetchDashboard = async () => {
-        setDashLoading(true); setDashMsg("");
+            // Auto-atualiza do Monday quando a dash carrega (após autenticação)
+      useEffect(() => {
+        // Busca ao montar se já autenticado
+        const overlay = document.getElementById("auth-overlay");
+        if (overlay && overlay.classList.contains("hidden")) {
+          fetchDashboard(true);
+        }
+        // Ou quando o login é concluído
+        const onReady = () => fetchDashboard(true);
+        window.addEventListener("dashboardReady", onReady);
+        return () => window.removeEventListener("dashboardReady", onReady);
+      }, []);
+
+      // ─── FETCH DASHBOARD LIVE ────────────────────────────────────────────────────
+      const fetchDashboard = async (silent = false) => {
+        if (!silent) { setDashLoading(true); setDashMsg(""); }
         try {
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61"];
           const q = "query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }";
@@ -1150,7 +1165,7 @@
         } catch(e) {
           setDashMsg("❌ "+e.message);
         }
-        setDashLoading(false);
+        if (!silent) setDashLoading(false);
       };
 
       const tabBtn = (val, cur, set, label) => (
