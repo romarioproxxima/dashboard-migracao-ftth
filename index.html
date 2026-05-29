@@ -756,7 +756,7 @@
           });
           const js = await res.json();
           if(!js.data) throw new Error(js.errors?.[0]?.message||"Erro API");
-          const items = js.data.boards[0].items_page.items.map(item => {
+          const newData = items.map(item => {
             const v={};
             item.column_values.forEach(cv=>{v[cv.id]=cv.text;});
             const valor     = parseFloat(v["numeric_mm0fhmyb"])||0;
@@ -1093,14 +1093,24 @@
         if (!silent) { setDashLoading(true); setDashMsg(""); }
         try {
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61"];
-          const q = "query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }";
-          const res = await fetch("https://api.monday.com/v2",{
-            method:"POST",
-            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
-            body:JSON.stringify({query:q})
-          });
-          const js = await res.json();
-          if(!js.data) throw new Error(js.errors?.[0]?.message||"Erro API");
+          const headers = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"};
+          // Busca todas as páginas (paginação)
+          let allItems = [];
+          let cursor = null;
+          do {
+            let q;
+            if (!cursor) {
+              q = "query { boards(ids:[18399019664]){ items_page(limit:100){ cursor items{ id name column_values(ids:" + JSON.stringify(cols) + "){ id text } } } } }";
+            } else {
+              q = 'query { next_items_page(limit:100, cursor:"' + cursor + '"){ cursor items{ id name column_values(ids:' + JSON.stringify(cols) + '){ id text } } } }';
+            }
+            const res = await fetch("https://api.monday.com/v2",{method:"POST",headers,body:JSON.stringify({query:q})});
+            const js = await res.json();
+            if(!js.data) throw new Error(js.errors?.[0]?.message||"Erro API");
+            const page = cursor ? js.data.next_items_page : js.data.boards[0].items_page;
+            allItems = allItems.concat(page.items);
+            cursor = page.cursor || null;
+          } while (cursor);
           const STATUS_MAP_D = {
             "Em desenvolvimento":"Em desenvolvimento","Aguardando vistoria":"Aguardando vistoria",
             "Vistoria Concluída":"Vistoria concluída","Avaliação do supervisor":"Avaliação supervisor",
@@ -1135,7 +1145,7 @@
             if(lp.includes("rafael")) return "Rafael Paiva";
             return p;
           };
-          const newData = js.data.boards[0].items_page.items.map(item => {
+          const newData = allItems.map(item => {
             const v={};
             item.column_values.forEach(cv=>{v[cv.id]=cv.text;});
             const valor=parseFloat(v["numeric_mm0fhmyb"])||0;
