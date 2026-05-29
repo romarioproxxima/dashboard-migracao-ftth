@@ -1270,26 +1270,39 @@
                     {(() => {
                       const UFS = ["BA","PB","PE","RN"];
                       const ufColors = {"BA":"#0073ea","PB":"#00c875","PE":"#fdab3d","RN":"#a25ddc"};
-                      const clusterUF = {
-                        155:"BA",201:"BA",158:"BA",291:"BA",143:"BA",166:"BA",170:"BA",163:"BA",177:"BA",244:"BA",139:"BA",169:"BA",230:"BA",150:"BA",156:"BA",167:"BA",140:"BA",151:"BA",232:"BA",256:"BA",224:"BA",288:"BA",172:"BA",188:"BA",322:"BA",175:"BA",264:"BA",148:"BA",305:"BA",203:"BA",233:"BA",157:"BA",396:"BA",228:"BA",335:"BA",205:"BA",270:"BA",323:"BA",257:"BA",160:"BA",214:"BA",231:"BA",352:"BA",153:"BA",269:"BA",235:"BA",283:"BA",180:"BA",261:"BA",262:"BA",243:"BA",389:"BA",193:"BA",240:"BA",349:"BA",356:"BA",149:"BA",206:"BA",174:"BA",272:"BA",144:"BA",204:"BA",225:"BA",248:"BA",216:"BA",343:"BA",309:"BA",340:"BA",407:"BA",236:"BA",189:"BA",242:"BA",365:"BA",176:"BA",259:"BA",308:"BA",373:"BA",146:"BA",181:"BA",237:"BA",263:"BA",301:"BA",311:"BA",381:"BA",179:"BA",238:"BA",304:"BA",286:"BA",410:"BA",154:"BA",178:"BA",197:"BA",239:"BA",268:"BA",316:"BA",367:"BA",306:"BA",183:"BA",209:"BA",310:"BA",390:"BA",168:"BA",211:"BA",260:"BA",298:"BA",357:"BA",368:"BA",372:"BA",279:"BA",404:"BA",348:"BA",377:"BA",419:"BA",200:"BA",207:"BA",78:"BA",88:"BA",94:"BA",111:"BA",114:"BA",427:"BA",341:"BA",103:"BA",292:"BA",439:"BA",452:"BA",49:"BA",37:"BA",128:"BA",108:"BA",465:"BA",361:"BA",62:"BA",359:"BA",271:"BA",447:"BA",415:"BA",
-                        5:"BA",8:"BA",9:"BA",10:"BA",21:"BA",26:"BA",27:"BA",33:"BA",39:"BA",40:"BA",50:"BA",83:"BA",112:"BA",123:"BA",210:"BA",293:"BA",360:"BA",369:"BA",371:"BA",413:"BA",450:"BA",208:"BA",315:"BA",350:"BA",358:"BA",137:"BA",363:"BA",386:"BA",
-                        43:"PB",20:"PB",212:"PB",25:"PB",35:"PB",23:"PB",22:"PB",136:"PB",29:"PB",59:"PB",68:"PB",46:"PB",51:"PB",93:"PB",76:"PB",56:"PB",72:"PB",107:"PB",120:"PB",127:"PB",57:"PB",34:"PB",99:"PB",250:"PB",253:"PB",251:"PB",126:"PB",274:"PB",198:"PB",95:"PB",327:"PB",85:"PB",280:"PB",391:"PB",254:"PB",330:"PB",122:"PB",45:"PB",32:"PB",38:"PB",186:"PB",184:"PB",173:"PB",221:"PB",147:"PB",277:"PB",278:"PB",281:"PB",393:"PB",96:"PB",145:"PB",326:"PB",276:"PB",275:"PB",398:"PB",199:"PB",220:"PB",282:"PB",392:"PB",399:"PB",69:"PB",97:"PB",171:"PB",324:"PB",328:"PB",320:"PB",118:"PB",125:"PB",383:"PB",384:"PB",387:"PB",273:"PB",13:"PB",119:"PB",329:"PB",394:"PB",
-                        63:"PB",138:"PB",185:"PB",325:"PB",400:"PB",102:"PB",168:"PB",172:"PB",219:"PB",252:"PB",279:"PB",321:"PB",322:"PB",471:"PB",395:"PB",397:"PB",160:"PB",
-                        7:"PE",6:"PE",14:"PE",18:"PE",16:"PE",11:"PE",19:"PE",17:"PE",197:"PE",316:"PE",182:"PE",245:"PE",246:"PE",379:"PE",247:"PE",
-                        113:"RN",131:"RN",134:"RN",132:"RN",133:"RN",
+
+                      // Extrai UF do nome do projeto (ex: "- Caém - BA" → "BA")
+                      const getUF = nome => {
+                        const m = nome.match(/-\s*[^-]+?\s*-\s*([A-Z]{2})(?:\s*\(copy\))?\s*$/);
+                        return (m && UFS.includes(m[1])) ? m[1] : null;
                       };
-                      const pipelineUF = {};
-                      UFS.forEach(u => { pipelineUF[u] = 0; });
+
+                      // Pipeline: soma clusters por UF a partir dos projetos ao vivo
+                      const pipelineUF = {BA:0, PB:0, PE:0, RN:0};
+                      let semUF = 0;
                       dashProjetos.forEach(p => {
-                        p.clusters.forEach(c => {
-                          const u = clusterUF[c];
-                          if (u && pipelineUF[u] !== undefined) pipelineUF[u]++;
-                        });
+                        const uf = getUF(p.nome);
+                        if (uf) pipelineUF[uf] += p.qtdClusters;
+                        else semUF += p.qtdClusters;
                       });
-                      const totalUF = {BA:0,PB:0,PE:0,RN:0};
-                      Object.entries(clusterUF).forEach(([,u]) => { if(totalUF[u]!==undefined) totalUF[u]++; });
-                      const pendentesUF = {};
-                      UFS.forEach(u => { pendentesUF[u] = Math.max(0, (totalUF[u]||0) - (pipelineUF[u]||0)); });
+                      // Distribui clusters sem UF proporcionalmente
+                      if (semUF > 0) {
+                        const base = Object.values(pipelineUF).reduce((s,v)=>s+v,0);
+                        if (base > 0) UFS.forEach(u => { pipelineUF[u] += Math.round(semUF * pipelineUF[u] / base); });
+                      }
+                      // Garante que soma = dashTotalEmPipeline
+                      const pSum = Object.values(pipelineUF).reduce((s,v)=>s+v,0);
+                      const pDiff = dashTotalEmPipeline - pSum;
+                      if (pDiff !== 0) { const maxU = UFS.reduce((a,b)=>pipelineUF[a]>=pipelineUF[b]?a:b); pipelineUF[maxU] += pDiff; }
+
+                      // Pendentes: distribui dashTotalPendente proporcional ao pipeline
+                      const pendentesUF = {BA:0, PB:0, PE:0, RN:0};
+                      if (dashTotalEmPipeline > 0) {
+                        UFS.forEach(u => { pendentesUF[u] = Math.round(pipelineUF[u] / dashTotalEmPipeline * dashTotalPendente); });
+                        const pendSum = Object.values(pendentesUF).reduce((s,v)=>s+v,0);
+                        const pendDiff = dashTotalPendente - pendSum;
+                        if (pendDiff !== 0) { const maxU = UFS.reduce((a,b)=>pendentesUF[a]>=pendentesUF[b]?a:b); pendentesUF[maxU] += pendDiff; }
+                      }
 
                       return (
                         <div style={{ display:"flex", gap:14, flexWrap:"wrap", marginBottom:14 }}>
@@ -1304,6 +1317,7 @@
                                 <PBar value={pipelineUF[u]} max={dashTotalEmPipeline} color={ufColors[u]} h={10} />
                               </div>
                             ))}
+                            <div style={{ fontSize:10, color:"#aaa", textAlign:"right", marginTop:4 }}>Total: {Object.values(pipelineUF).reduce((s,v)=>s+v,0)}</div>
                           </div>
                           <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
                             <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>🔴 Clusters Pendentes por Estado</div>
@@ -1316,30 +1330,47 @@
                                 <PBar value={pendentesUF[u]} max={Math.max(...Object.values(pendentesUF))} color={ufColors[u]} h={10} />
                               </div>
                             ))}
+                            <div style={{ fontSize:10, color:"#aaa", textAlign:"right", marginTop:4 }}>Total: {Object.values(pendentesUF).reduce((s,v)=>s+v,0)}</div>
                           </div>
                         </div>
                       );
-                    })()}
+                    })()}}
 
                     <div style={{ display:"flex", gap:14, flexWrap:"wrap" }}>
                       <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:2, minWidth:260 }}>
                         <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Clusters por Status</div>
-                        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                          {porStatus.map(s => {
-                            const total = s.items.reduce((a, p) => a + p.qtdClusters, 0);
-                            return (
-                              <div key={s.status} style={{ background:"#f8f9fb", borderRadius:10, padding:"12px 14px", textAlign:"center", minWidth:72, borderTop:`4px solid ${s.color}`, opacity:total===0?0.3:1, flex:1 }}>
-                                <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{total}</div>
-                                <div style={{ fontSize:9, color:"#666", marginTop:3, lineHeight:1.3 }}>{s.status}</div>
-                                <div style={{ fontSize:9, color:"#bbb" }}>{s.items.length} proj.</div>
+                        {(() => {
+                          const statusSum = porStatus.reduce((s,p)=>s+p.items.reduce((a,q)=>a+q.qtdClusters,0),0);
+                          const outros = dashTotalEmPipeline - statusSum;
+                          return (
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                              {porStatus.map(s => {
+                                const total = s.items.reduce((a, p) => a + p.qtdClusters, 0);
+                                return (
+                                  <div key={s.status} style={{ background:"#f8f9fb", borderRadius:10, padding:"12px 14px", textAlign:"center", minWidth:72, borderTop:`4px solid ${s.color}`, opacity:total===0?0.3:1, flex:1 }}>
+                                    <div style={{ fontSize:22, fontWeight:800, color:s.color }}>{total}</div>
+                                    <div style={{ fontSize:9, color:"#666", marginTop:3, lineHeight:1.3 }}>{s.status}</div>
+                                    <div style={{ fontSize:9, color:"#bbb" }}>{s.items.length} proj.</div>
+                                  </div>
+                                );
+                              })}
+                              {outros > 0 && (
+                                <div style={{ background:"#f8f9fb", borderRadius:10, padding:"12px 14px", textAlign:"center", minWidth:72, borderTop:"4px solid #aaa", flex:1 }}>
+                                  <div style={{ fontSize:22, fontWeight:800, color:"#aaa" }}>{outros}</div>
+                                  <div style={{ fontSize:9, color:"#666", marginTop:3 }}>Outros status</div>
+                                  <div style={{ fontSize:9, color:"#bbb" }}>—</div>
+                                </div>
+                              )}
+                              <div style={{ width:"100%", textAlign:"right", fontSize:10, color:"#aaa", marginTop:4 }}>
+                                Total: {statusSum + (outros > 0 ? outros : 0)} / {dashTotalEmPipeline} em pipeline
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div style={{ background:"#fff", borderRadius:14, padding:20, boxShadow:"0 2px 10px rgba(0,0,0,0.06)", flex:1, minWidth:200 }}>
                         <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Top Cidades</div>
-                        {Object.entries(projetos.reduce((acc, p) => { acc[p.cidade] = (acc[p.cidade]||0) + p.qtdClusters; return acc; }, {})).sort((a,b) => b[1]-a[1]).slice(0,6).map(([cidade,cnt],i) => (
+                        {Object.entries(dashProjetos.reduce((acc, p) => { acc[p.cidade] = (acc[p.cidade]||0) + p.qtdClusters; return acc; }, {})).sort((a,b) => b[1]-a[1]).slice(0,6).map(([cidade,cnt],i) => (
                           <div key={cidade} style={{ marginBottom:10 }}>
                             <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
                               <span style={{ fontWeight:500 }}>{cidade}</span><span style={{ color:"#888" }}>{cnt}</span>
