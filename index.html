@@ -988,6 +988,16 @@
         ? liveDashData.map(p=>({...p, qtdClusters:p.clusters.length, clientesPlanilha:p.clientes||0}))
         : projetos;
 
+      // ─── VALORES DERIVADOS DO dashProjetos (atualizam com dados ao vivo) ────────
+      const dashTotalEmPipeline = dashProjetos.reduce((s, p) => s + p.qtdClusters, 0);
+      const dashTotalPendente   = Math.max(0, UNIVERSO_REAL - dashTotalEmPipeline);
+      const dashTotalEmDesenv   = dashProjetos.filter(p => p.status === "Em desenvolvimento").reduce((s, p) => s + p.qtdClusters, 0);
+      const dashTotalAProjetar  = dashTotalPendente + dashTotalEmDesenv;
+      const dashTotalValor      = liveDashData ? dashProjetos.reduce((s, p) => s + (p.valor||0), 0) : totalValor;
+      const dashTotalPortas     = liveDashData ? dashProjetos.reduce((s, p) => s + (p.portas||0), 0) : totalPortas;
+      const dashTotalClientes   = dashProjetos.reduce((s, p) => s + p.clientesPlanilha, 0);
+      const dashMediaPorPorta   = dashTotalPortas > 0 ? dashTotalValor / dashTotalPortas : 0;
+
       const filtered = dashProjetos.filter(p => {
         const ms = !search || p.nome.toLowerCase().includes(search.toLowerCase()) || p.projetista.toLowerCase().includes(search.toLowerCase()) || p.cidade.toLowerCase().includes(search.toLowerCase());
         return ms && (fStatus === "all" || p.status === fStatus);
@@ -1176,23 +1186,23 @@
                     <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                       <StatCard icon="📋" label="Total Clusters" value={fmtN(TOTAL_CLUSTERS)} sub={`${JA_RESOLVIDOS} já resolvidos`} color="#0073ea" />
                       <StatCard icon="✅" label="Já resolvidos" value={fmtN(JA_RESOLVIDOS)} sub="FTTH ou proj. existente" color="#00c875" />
-                      <StatCard icon="🎯" label="Pendentes" value={fmtN(totalPendente)} sub={`de ${UNIVERSO_REAL} a projetar`} color="#7e3b8a" />
-                      <StatCard icon="🔄" label="Em pipeline" value={fmtN(totalEmPipeline)} sub={`${((totalEmPipeline/UNIVERSO_REAL)*100).toFixed(1)}% do universo`} color="#579bfc" />
-                      <StatCard icon="🔌" label="Total Portas" value={fmtN(totalPortas)} sub="portas projetadas" color="#03c4eb" />
-                      <StatCard icon="📐" label="Média p/ Porta" value={fmt(mediaPorPorta)} sub="valor médio por porta" color="#00c875" />
-                      <StatCard icon="💰" label="Valor total" value={fmt(totalValor)} sub="projetado" color="#ff642e" />
+                      <StatCard icon="🎯" label="Pendentes" value={fmtN(dashTotalPendente)} sub={`de ${UNIVERSO_REAL} a projetar`} color="#7e3b8a" />
+                      <StatCard icon="🔄" label="Em pipeline" value={fmtN(dashTotalEmPipeline)} sub={`${((dashTotalEmPipeline/UNIVERSO_REAL)*100).toFixed(1)}% do universo`} color="#579bfc" />
+                      <StatCard icon="🔌" label="Total Portas" value={fmtN(dashTotalPortas)} sub="portas projetadas" color="#03c4eb" />
+                      <StatCard icon="📐" label="Média p/ Porta" value={fmt(dashMediaPorPorta)} sub="valor médio por porta" color="#00c875" />
+                      <StatCard icon="💰" label="Valor total" value={fmt(dashTotalValor)} sub="projetado" color="#ff642e" />
                     </div>
                     <div style={{ background:"#fff", borderRadius:14, padding:20, marginBottom:14, boxShadow:"0 2px 10px rgba(0,0,0,0.06)" }}>
                       <div style={{ fontWeight:700, fontSize:14, marginBottom:12 }}>Progresso Geral</div>
                       <div style={{ display:"flex", height:32, borderRadius:10, overflow:"hidden", marginBottom:10 }}>
                         <div style={{ width:`${(JA_RESOLVIDOS/TOTAL_CLUSTERS)*100}%`, background:"#c4c4c4", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700 }}>{JA_RESOLVIDOS}</div>
-                        <div style={{ width:`${(totalEmPipeline/TOTAL_CLUSTERS)*100}%`, background:"#0073ea", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700 }}>{totalEmPipeline}</div>
-                        <div style={{ flex:1, background:"#fde8e8", display:"flex", alignItems:"center", justifyContent:"center", color:"#e2445c", fontSize:11, fontWeight:700 }}>{totalPendente}</div>
+                        <div style={{ width:`${(dashTotalEmPipeline/TOTAL_CLUSTERS)*100}%`, background:"#0073ea", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11, fontWeight:700 }}>{dashTotalEmPipeline}</div>
+                        <div style={{ flex:1, background:"#fde8e8", display:"flex", alignItems:"center", justifyContent:"center", color:"#e2445c", fontSize:11, fontWeight:700 }}>{dashTotalPendente}</div>
                       </div>
                       <div style={{ display:"flex", gap:20, fontSize:11, color:"#666" }}>
                         <span>⬜ {JA_RESOLVIDOS} resolvidos</span>
-                        <span>🔵 {totalEmPipeline} pipeline</span>
-                        <span>🔴 {totalPendente} pendentes</span>
+                        <span>🔵 {dashTotalEmPipeline} pipeline</span>
+                        <span>🔴 {dashTotalPendente} pendentes</span>
                       </div>
                     </div>
                     {/* Clusters por Estado */}
@@ -1230,7 +1240,7 @@
                                   <span style={{ fontWeight:700, color:ufColors[u] }}>{u}</span>
                                   <span style={{ color:"#888" }}>{pipelineUF[u]} clusters</span>
                                 </div>
-                                <PBar value={pipelineUF[u]} max={totalEmPipeline} color={ufColors[u]} h={10} />
+                                <PBar value={pipelineUF[u]} max={dashTotalEmPipeline} color={ufColors[u]} h={10} />
                               </div>
                             ))}
                           </div>
@@ -1273,7 +1283,7 @@
                             <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
                               <span style={{ fontWeight:500 }}>{cidade}</span><span style={{ color:"#888" }}>{cnt}</span>
                             </div>
-                            <PBar value={cnt} max={totalEmPipeline} color={PCOLORS[i%PCOLORS.length]} />
+                            <PBar value={cnt} max={dashTotalEmPipeline} color={PCOLORS[i%PCOLORS.length]} />
                           </div>
                         ))}
                       </div>
@@ -1492,11 +1502,11 @@
                         <div style={{ flex:1, minWidth:130 }}>
                           <div style={{ fontWeight:700, color:"#1f1f1f", fontSize:14 }}>{nome}</div>
                           <div style={{ fontSize:11, color:"#888", marginTop:2 }}>{d.count} proj. · {d.clusters} clusters · {fmtN(d.clientes)} clientes</div>
-                          <PBar value={d.clusters} max={totalEmPipeline} color={PCOLORS[i%PCOLORS.length]} h={6} />
+                          <PBar value={d.clusters} max={dashTotalEmPipeline} color={PCOLORS[i%PCOLORS.length]} h={6} />
                         </div>
                         <div style={{ textAlign:"right" }}>
                           <div style={{ fontSize:15, fontWeight:800, color:"#0073ea" }}>{fmt(d.valor)}</div>
-                          <div style={{ fontSize:10, color:"#aaa" }}>{((d.clusters/totalEmPipeline)*100).toFixed(1)}% do pipeline</div>
+                          <div style={{ fontSize:10, color:"#aaa" }}>{((d.clusters/dashTotalEmPipeline)*100).toFixed(1)}% do pipeline</div>
                         </div>
                       </div>
                     ))}
@@ -1511,8 +1521,8 @@
               const totalProj = projetos.length;
               const projComValor = projetos.filter(p => p.valor > 0).length;
               const projSemValor = projetos.filter(p => p.valor === 0).length;
-              const valorMedioProj = totalValor / projComValor;
-              const portasMedioProj = totalPortas / totalProj;
+              const valorMedioProj = dashTotalValor / projComValor;
+              const portasMedioProj = dashTotalPortas / totalProj;
               const clientesMedioProj = totalClientes / totalProj;
 
               // Status por projeto (não por cluster)
@@ -1574,7 +1584,7 @@
                       {/* KPI Cards */}
                       <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                         <StatCard icon="📁" label="Total Projetos" value={fmtN(totalProj)} sub={`${projComValor} com valor · ${projSemValor} sem valor`} color="#0073ea" />
-                        <StatCard icon="💰" label="Valor Total" value={fmt(totalValor)} sub="soma dos projetos" color="#ff642e" />
+                        <StatCard icon="💰" label="Valor Total" value={fmt(dashTotalValor)} sub="soma dos projetos" color="#ff642e" />
                         <StatCard icon="📊" label="Valor Médio/Projeto" value={fmt(valorMedioProj)} sub="entre os com valor" color="#a25ddc" />
                         <StatCard icon="🔌" label="Portas Médio/Proj" value={Math.round(portasMedioProj).toString()} sub="portas por projeto" color="#03c4eb" />
                         <StatCard icon="👥" label="Clientes Médio/Proj" value={Math.round(clientesMedioProj).toString()} sub="clientes por projeto" color="#00c875" />
@@ -1683,11 +1693,11 @@
                               <div style={{ flex:1, minWidth:120 }}>
                                 <div style={{ fontWeight:800, fontSize:15, color:"#1f1f1f" }}>{nome}</div>
                                 <div style={{ fontSize:11, color:"#888", marginTop:2 }}>{d.projetos} projetos · {d.clusters} clusters · {d.portas} portas · {fmtN(d.clientes)} clientes</div>
-                                <PBar value={d.valor} max={totalValor} color={PCOLORS[i%PCOLORS.length]} h={6} />
+                                <PBar value={d.valor} max={dashTotalValor} color={PCOLORS[i%PCOLORS.length]} h={6} />
                               </div>
                               <div style={{ textAlign:"right" }}>
                                 <div style={{ fontSize:16, fontWeight:800, color:PCOLORS[i%PCOLORS.length] }}>{fmt(d.valor)}</div>
-                                <div style={{ fontSize:11, color:"#aaa" }}>{((d.valor/totalValor)*100).toFixed(1)}% do total</div>
+                                <div style={{ fontSize:11, color:"#aaa" }}>{((d.valor/dashTotalValor)*100).toFixed(1)}% do total</div>
                               </div>
                             </div>
                             {/* Status breakdown for this projetista */}
@@ -1827,7 +1837,7 @@
                 {cronSec === "projetos" && <div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:16 }}>
                   {[
-                    { label:"A projetar", value:String(totalAProjetar), sub:`${totalPendente} pend. + ${totalEmDesenv} desenv.`, color:"#e2445c", icon:"⏳" },
+                    { label:"A projetar", value:String(dashTotalAProjetar), sub:`${dashTotalPendente} pend. + ${dashTotalEmDesenv} desenv.`, color:"#e2445c", icon:"⏳" },
                     { label:"Projetistas", value:String(PROJETISTAS.length), sub:`${CLUSTERS_POR_PROJETISTA_DIA} clusters/dia cada`, color:"#0073ea", icon:"👷" },
                     { label:"Cap./dia", value:String(CAPACIDADE_DIA), sub:"clusters", color:"#a25ddc", icon:"⚡" },
                     { label:"Dias úteis", value:String(nDiasProj), sub:"desc. feriados", color:"#fdab3d", icon:"📆" },
