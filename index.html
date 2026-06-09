@@ -740,7 +740,18 @@
       });
       const [search, setSearch] = useState("");
       const [statusF, setStatusF] = useState("all");
+      const [loteF, setLoteF] = useState("all");
+      const [compraF, setCompraF] = useState("all");
       const [sortCfg, setSortCfg] = useState({col:"nome",dir:"asc"});
+
+      const LOTE_COLOR_MAP = {
+        "Lote 01":"#cab641","Lote 02":"#fdab3d","Lote 03":"#9d50dd",
+        "Aguardando Dados":"#007eb5","Reajustando":"#784bd1","Aguardando Aprovação":"#66ccff"
+      };
+      const COMPRA_COLOR_MAP = {
+        "Em Progresso":"#fdab3d","Concluído":"#00c875","Parado":"#df2f4a",
+        "Aguardando Dados":"#007eb5","Reajustando":"#784bd1","Aguardando Aprovação":"#66ccff"
+      };
 
       const STATUS_MAP_B = {
         "Em desenvolvimento":"Em desenvolvimento","Aguardando vistoria":"Aguardando vistoria",
@@ -762,7 +773,7 @@
         try {
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0a5pkz",
             "numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61","numeric_mm0fzxsd",
-            "numeric_mm3bhenr","numeric_mm0fhb2h"];
+            "numeric_mm3bhenr","numeric_mm0fhb2h","color_mm3cfaj4","color_mm3c84cc"];
           const hdrs = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"};
           let allItemsB = []; let cursorB = null;
           do {
@@ -789,10 +800,13 @@
             const ajustado  = parseFloat(v["numeric_mm3bhenr"])||0;
             const totalCto  = cto8 + cto16;
             const portas    = cto8*8 + cto16*16;
+            const lote  = v["color_mm3cfaj4"] || "";
+            const compra = v["color_mm3c84cc"] || "";
             return {
               id:item.id, nome:item.name, url:item.url,
               projetista: v["person"]||"—",
               status: STATUS_MAP_B[v["color_mm0as2nc"]||""] || v["color_mm0as2nc"] || "",
+              lote, compra,
               valor, cabos, cto8, cto16, totalCto, portas,
               clientes, atendidos, postes, ajustado,
               valorPorPorta:    portas>0 ? valor/portas : 0,
@@ -813,8 +827,12 @@
       };  // end load
 
       const allStatuses = data ? [...new Set(data.map(p=>p.status))].filter(Boolean).sort() : [];
+      const allLotes    = data ? [...new Set(data.map(p=>p.lote))].filter(Boolean).sort() : [];
+      const allCompras  = data ? [...new Set(data.map(p=>p.compra))].filter(Boolean).sort() : [];
       const filtered = (data||[])
         .filter(p=>statusF==="all"||p.status===statusF)
+        .filter(p=>loteF==="all"||p.lote===loteF)
+        .filter(p=>compraF==="all"||p.compra===compraF)
         .filter(p=>!search||p.nome.toLowerCase().includes(search.toLowerCase())||p.projetista.toLowerCase().includes(search.toLowerCase()));
       const sorted = [...filtered].sort((a,b)=>{
         const va=typeof a[sortCfg.col]==="string"?a[sortCfg.col].toLowerCase():a[sortCfg.col]||0;
@@ -869,15 +887,29 @@
                 style={{padding:"9px 16px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,flex:1,minWidth:220,outline:"none"}}/>
               <select value={statusF} onChange={e=>setStatusF(e.target.value)}
                 style={{padding:"9px 14px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,background:"#fff",cursor:"pointer",outline:"none"}}>
-                <option value="all">Todos os status ({data.length})</option>
+                <option value="all">🔵 Status do projeto ({data.length})</option>
                 {allStatuses.map(s=>(
                   <option key={s} value={s}>{s} ({data.filter(p=>p.status===s).length})</option>
                 ))}
               </select>
-              {(statusF!=="all"||search) && (
-                <button onClick={()=>{setStatusF("all");setSearch("");}}
+              <select value={loteF} onChange={e=>setLoteF(e.target.value)}
+                style={{padding:"9px 14px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,background:"#fff",cursor:"pointer",outline:"none"}}>
+                <option value="all">🗂️ Lote ({data.length})</option>
+                {allLotes.map(l=>(
+                  <option key={l} value={l}>{l} ({data.filter(p=>p.lote===l).length})</option>
+                ))}
+              </select>
+              <select value={compraF} onChange={e=>setCompraF(e.target.value)}
+                style={{padding:"9px 14px",borderRadius:20,border:"1px solid #e0e0e0",fontSize:12,background:"#fff",cursor:"pointer",outline:"none"}}>
+                <option value="all">🛒 Compra Material ({data.length})</option>
+                {allCompras.map(c=>(
+                  <option key={c} value={c}>{c} ({data.filter(p=>p.compra===c).length})</option>
+                ))}
+              </select>
+              {(statusF!=="all"||loteF!=="all"||compraF!=="all"||search) && (
+                <button onClick={()=>{setStatusF("all");setLoteF("all");setCompraF("all");setSearch("");}}
                   style={{padding:"7px 14px",borderRadius:20,border:"none",background:"#e2445c",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                  ✕ Limpar
+                  ✕ Limpar filtros
                 </button>
               )}
               <span style={{fontSize:11,color:"#aaa"}}>{sorted.length} projeto{sorted.length!==1?"s":""}</span>
@@ -915,6 +947,8 @@
                     </th>
                     {th("nome","Projeto")}
                     {th("status","Status")}
+                    {th("lote","Lote","left","#cab641")}
+                    {th("compra","Compra Mat.","left","#fdab3d")}
                     {th("totalCto","CTOs","center","#a25ddc")}
                     {th("portas","Portas","center","#03c4eb")}
                     {th("cabos","Cabos (m)","center","#0073ea")}
@@ -938,6 +972,8 @@
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",color:"#ccc",textAlign:"center"}}>{i+1}</td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",fontWeight:500,color:"#333",maxWidth:280}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nome}</div></td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0"}}><span style={{background:statusColorMap[p.status]||"#ccc",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.status||"—"}</span></td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0"}}>{p.lote?<span style={{background:LOTE_COLOR_MAP[p.lote]||"#aaa",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.lote}</span>:"—"}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0"}}>{p.compra?<span style={{background:COMPRA_COLOR_MAP[p.compra]||"#aaa",color:"#fff",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>{p.compra}</span>:"—"}</td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#a25ddc"}}>{fmtI(p.totalCto)}</td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",fontWeight:700,color:"#03c4eb"}}>{fmtI(p.portas)}</td>
                       <td style={{padding:"7px 8px",borderBottom:"1px solid #f0f0f0",textAlign:"center",color:"#0073ea"}}>{p.cabos?fmtN(p.cabos):"—"}</td>
@@ -954,7 +990,7 @@
                 </tbody>
                 <tfoot>
                   <tr style={{background:"#f0f7ff",fontWeight:800}}>
-                    <td colSpan={3} style={{padding:"8px 8px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({sorted.length})</td>
+                    <td colSpan={5} style={{padding:"8px 8px",borderTop:"2px solid #ddd",color:"#333"}}>TOTAL ({sorted.length})</td>
                     <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#a25ddc"}}>{fmtN(totals.totalCto)}</td>
                     <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#03c4eb"}}>{fmtN(totals.portas)}</td>
                     <td style={{padding:"8px 8px",borderTop:"2px solid #ddd",textAlign:"center",color:"#0073ea"}}>{fmtN(totals.cabos)}</td>
