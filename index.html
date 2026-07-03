@@ -774,7 +774,7 @@
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0a5pkz",
             "numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61","numeric_mm0fzxsd",
             "numeric_mm3bhenr","numeric_mm0fhb2h","color_mm3cfaj4","color_mm3c84cc"];
-          const hdrs = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"};
+          const hdrs = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY3NDMzNjA0NywiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNi0yM1QxMzo1NjoxOC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.zB3BwEVPIT4vsOyBVI_ItQtlOOzhnjuHrJv4nJhg5lI","API-Version":"2024-01"};
           let allItemsB = []; let cursorB = null;
           do {
             const qB = !cursorB
@@ -1085,7 +1085,7 @@
           const q = `query { boards(ids:[18399019664]){ items_page(limit:100){ items{ id name column_values(ids:["numeric_mm0fhmyb","numeric_mm0a5pkz","numeric_mm0fzxsd","color_mm0as2nc"]){ id text } } } } }`;
           const res = await fetch("https://api.monday.com/v2", {
             method:"POST",
-            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},
+            headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY3NDMzNjA0NywiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNi0yM1QxMzo1NjoxOC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.zB3BwEVPIT4vsOyBVI_ItQtlOOzhnjuHrJv4nJhg5lI","API-Version":"2024-01"},
             body:JSON.stringify({query:q})
           });
           const data = await res.json();
@@ -1123,7 +1123,7 @@
           let ok=0;
           for (const upd of updates) {
             const m = `mutation { change_column_value(board_id:18399019664, item_id:${upd.id}, column_id:"numeric_mm3bhenr", value:"${upd.ajustado}") { id } }`;
-            const r2 = await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"},body:JSON.stringify({query:m})});
+            const r2 = await fetch("https://api.monday.com/v2",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY3NDMzNjA0NywiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNi0yM1QxMzo1NjoxOC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.zB3BwEVPIT4vsOyBVI_ItQtlOOzhnjuHrJv4nJhg5lI","API-Version":"2024-01"},body:JSON.stringify({query:m})});
             const d2 = await r2.json();
             if (d2.data) ok++;
           }
@@ -1153,7 +1153,7 @@
         if (!silent) { setDashLoading(true); setDashMsg(""); }
         try {
           const cols = ["color_mm0as2nc","person","numeric_mm0fhmyb","numeric_mm0awjmt","numeric_mm0fach","numeric_mm0fpr61"];
-          const headers = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s","API-Version":"2024-01"};
+          const headers = {"Content-Type":"application/json","Authorization":"eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY3NDMzNjA0NywiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNi0yM1QxMzo1NjoxOC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.zB3BwEVPIT4vsOyBVI_ItQtlOOzhnjuHrJv4nJhg5lI","API-Version":"2024-01"};
           // Busca todas as páginas (paginação)
           let allItems = [];
           let cursor = null;
